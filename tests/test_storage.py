@@ -54,7 +54,7 @@ class StorageTests(unittest.TestCase):
             result = storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})
         self.assertEqual(result["status"], "conflict")
         self.assertEqual(self.note.read_text(), "local")
-        self.assertEqual([p.read_text() for p in self.folder.glob("recovery-*.txt")], ["external"])
+        self.assertEqual([p.read_text() for p in self.folder.glob("conflict-*.txt")], ["external"])
 
     def test_exchange_failure_does_not_modify_original(self):
         storage.run({"type": "read"})
@@ -76,7 +76,7 @@ class StorageTests(unittest.TestCase):
         handle.flush()
         self.assertEqual(result["status"], "ok")
         self.assertEqual(self.note.read_text(), "new")
-        self.assertEqual([p.read_text() for p in self.folder.glob("recovery-*.txt")], ["old-late"])
+        self.assertEqual([p.read_text() for p in self.folder.glob("history-*.txt")], ["old-late"])
 
     def test_subprocess_protocol_persists_across_processes(self):
         def request(payload):
@@ -92,25 +92,73 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         self.assertEqual(request({"type": "read"})["text"], "line 1\nline 2")
 
-    def test_recovery_limit_stops_saves_without_deleting_data_and_allows_retry(self):
+    def test_protected_limit_stops_saves_without_deleting_data_and_allows_retry(self):
         storage.run({"type": "read"})
         self.note.write_text("base")
         baseline = storage.run({"type": "read"})
-        for number in range(storage.RECOVERY_LIMIT - 1):
-            (self.folder / f"recovery-{number}.txt").write_text(f"old-{number}")
+        for number in range(storage.PROTECTED_LIMIT - 1):
+            (self.folder / f"conflict-{number}.txt").write_text(f"old-{number}")
         pending = self.folder / ".pending-interrupted"
         pending.write_text("possibly displaced")
         request = {"type": "write", "revision": baseline["revision"], "text": "local"}
         self.assertEqual(storage.run(request), {"status": "error", "reason": "recovery_limit"})
         self.assertEqual(self.note.read_text(), "base")
         self.assertEqual(pending.read_text(), "possibly displaced")
-        self.assertEqual(len(list(self.folder.glob("recovery-*.txt"))), storage.RECOVERY_LIMIT - 1)
+        self.assertEqual(len(list(self.folder.glob("conflict-*.txt"))), storage.PROTECTED_LIMIT - 1)
         # Removing a reviewed copy is an explicit user decision.
-        (self.folder / "recovery-0.txt").unlink()
+        (self.folder / "conflict-0.txt").unlink()
         self.assertEqual(storage.run(request)["status"], "ok")
         self.assertEqual(self.note.read_text(), "local")
-        self.assertEqual(len(list(self.folder.glob("recovery-*.txt"))), storage.RECOVERY_LIMIT - 1)
+        self.assertEqual(len(list(self.folder.glob("conflict-*.txt"))), storage.PROTECTED_LIMIT - 2)
         self.assertEqual(pending.read_text(), "possibly displaced")
+
+    def test_many_saves_rotate_only_normal_history(self):
+        result = storage.run({"type": "read"})
+        for number in range(75):
+            result = storage.run({"type": "write", "revision": result["revision"], "text": f"note-{number}"})
+            self.assertEqual(result["status"], "ok")
+        self.assertEqual(self.note.read_text(), "note-74")
+        history = list(self.folder.glob("history-*.txt"))
+        self.assertEqual(len(history), storage.HISTORY_LIMIT)
+        self.assertEqual({p.read_text() for p in history}, {f"note-{n}" for n in range(64, 74)})
+
+    def test_conflicts_pending_and_legacy_copies_survive_rotation(self):
+        storage.run({"type": "read"})
+        self.note.write_text("base")
+        baseline = storage.run({"type": "read"})
+        exchange = storage.exchange
+
+        def racing_exchange(first, second):
+            second.write_text("external")
+            exchange(first, second)
+
+        with patch.object(storage, "exchange", racing_exchange):
+            self.assertEqual(storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})["status"], "conflict")
+        pending = self.folder / ".pending-interrupted"
+        pending.write_text("pending")
+        legacy = self.folder / "recovery-123-01234567.txt"
+        legacy.write_text("legacy")
+        current = storage.run({"type": "read"})
+        for number in range(40):
+            current = storage.run({"type": "write", "revision": current["revision"], "text": str(number)})
+            self.assertEqual(current["status"], "ok")
+        self.assertEqual([p.read_text() for p in self.folder.glob("conflict-*.txt")], ["external"])
+        self.assertEqual(pending.read_text(), "pending")
+        self.assertEqual(legacy.read_text(), "legacy")
+        self.assertEqual(len(list(self.folder.glob("history-*.txt"))), storage.HISTORY_LIMIT)
+
+    def test_late_write_to_rotated_inode_is_not_recoverable_from_history(self):
+        first = storage.run({"type": "read"})
+        saved = storage.run({"type": "write", "revision": first["revision"], "text": "initial"})
+        handle = self.note.open("a")
+        self.addCleanup(handle.close)
+        for number in range(storage.HISTORY_LIMIT + 2):
+            saved = storage.run({"type": "write", "revision": saved["revision"], "text": str(number)})
+            self.assertEqual(saved["status"], "ok")
+        handle.write("-late-external")
+        handle.flush()
+        self.assertEqual(self.note.read_text(), str(storage.HISTORY_LIMIT + 1))
+        self.assertFalse(any("-late-external" in p.read_text() for p in self.folder.glob("history-*.txt")))
 
 
 if __name__ == "__main__":

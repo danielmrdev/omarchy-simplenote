@@ -7,12 +7,14 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 import time
 import sys
 
 LIMIT = 1024 * 1024
-RECOVERY_LIMIT = 32
+HISTORY_LIMIT = 10
+PROTECTED_LIMIT = 32
 ABSENT = "absent"
 
 
@@ -74,11 +76,11 @@ def run_locked(folder, request):
     data = request["text"].encode("utf-8")
     if len(data) > LIMIT:
         raise ValueError("note too large")
-    # Pending files may hold displaced notes after an interrupted exchange.
-    # Count both kinds and never clean them up without the user's decision.
-    recoveries = sum(1 for entry in folder.iterdir()
-                     if entry.name.startswith(("recovery-", ".pending-")))
-    if recoveries >= RECOVERY_LIMIT:
+    # Interrupted operations and detected conflicts may hold unique data.
+    # Never rotate those; bound them separately and report when full.
+    protected = sum(1 for entry in folder.iterdir()
+                    if entry.name.startswith(("conflict-", ".pending-")))
+    if protected >= PROTECTED_LIMIT:
         return {"status": "error", "reason": "recovery_limit"}
     fd, temporary = tempfile.mkstemp(prefix=".pending-", dir=folder)
     temporary = Path(temporary)
@@ -102,15 +104,24 @@ def run_locked(folder, request):
                 if error.errno == errno.ENOENT:
                     return {"status": "conflict"}
                 raise
-            # Keep the displaced inode: another editor may still have it open.
-            # Never delete these automatically; even a delayed external write is
-            # recoverable from the retained inode.
-            backup = folder / ("recovery-%d-%s.txt" % (time.time_ns(), os.urandom(4).hex()))
+            # Classify as protected until the displaced revision is verified.
+            suffix = "%d-%s.txt" % (time.time_ns(), os.urandom(4).hex())
+            backup = folder / ("conflict-" + suffix)
             os.rename(temporary, backup)
             displaced_inode = False
             displaced = read_file(backup)
             if displaced is None or revision(displaced) != request["revision"]:
                 return {"status": "conflict"}
+            # Only files created by this history policy are eligible for
+            # rotation. Legacy recovery files and interrupted/conflict copies
+            # may contain unique versions and are left for manual inspection.
+            history = [entry for entry in folder.iterdir()
+                       if re.fullmatch(r"history-[0-9]+-[0-9a-f]{8}\.txt", entry.name)
+                       and entry.is_file() and not entry.is_symlink()]
+            history.sort(key=lambda entry: (int(entry.name.split("-")[1]), entry.name))
+            for old in history[:max(0, len(history) - HISTORY_LIMIT + 1)]:
+                old.unlink()
+            os.rename(backup, folder / ("history-" + suffix))
         directory_fd = os.open(folder, os.O_RDONLY | os.O_DIRECTORY)
         try:
             os.fsync(directory_fd)

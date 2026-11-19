@@ -12,3 +12,5 @@ and releases will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Initial project documentation.
 - Preliminary bar note panel, editor and local plaintext persistence, pending
   live-shell verification.
+- Automatic rotation of normal note history, with detected conflicts retained
+  separately for manual recovery.
