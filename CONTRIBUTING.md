@@ -33,6 +33,13 @@ design. The integration fixture connects the real state machine, storage
 helper, router and translations, with source-level checks of QML wiring; it
 does not execute QML, emulate the shell, or verify focus, layout or IPC.
 
+Run the editor focus regression with Qt 6 Quick Test (offscreen, without the
+running shell):
+
+```sh
+QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/tst_editor.qml
+```
+
 ## Release preparation
 
 Before publishing, ensure the README describes the actual functionality,
