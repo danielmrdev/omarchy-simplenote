@@ -124,6 +124,49 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         self.assertEqual(request({"type": "read"})["text"], "line 1\nline 2")
 
+    def test_utf8_byte_limit_and_oversize_preserves_file(self):
+        initial = storage.run({"type": "read"})
+        exact = "ñ" * (storage.LIMIT // 2)
+        saved = storage.run({"type": "write", "revision": initial["revision"], "text": exact})
+        self.assertEqual(saved["status"], "ok")
+        self.assertEqual(len(self.note.read_bytes()), storage.LIMIT)
+        self.assertEqual(storage.run({"type": "read"})["text"], exact)
+        result = storage.run({"type": "write", "revision": saved["revision"], "text": exact + "a"})
+        self.assertEqual(result, {"status": "error", "reason": "note_too_large"})
+        self.assertEqual(self.note.read_text(), exact)
+        self.assertEqual(list(self.folder.glob(".pending-*")), [])
+
+    def test_subprocess_reports_oversized_disk_and_recovery_without_stderr(self):
+        storage.run({"type": "read"})
+        self.note.write_bytes(b"a" * (storage.LIMIT + 1))
+        def request(payload):
+            return subprocess.run([sys.executable, str(Path(storage.__file__))],
+                                  input=json.dumps(payload) + "\n", text=True,
+                                  capture_output=True, check=True)
+        result = request({"type": "read"})
+        self.assertEqual(json.loads(result.stdout), {"status": "error", "reason": "note_too_large"})
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(self.note.stat().st_size, storage.LIMIT + 1)
+        self.note.write_text("intact")
+        recovery = self.folder / "conflict-123-01234567.txt"
+        recovery.write_bytes(b"b" * (storage.LIMIT + 1))
+        result = request({"type": "read", "recovery": recovery.name})
+        self.assertEqual(json.loads(result.stdout), {"status": "error", "reason": "note_too_large"})
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(self.note.read_text(), "intact")
+        self.assertEqual(recovery.stat().st_size, storage.LIMIT + 1)
+
+    def test_subprocess_oversized_write_returns_structured_error(self):
+        initial = storage.run({"type": "read"})
+        saved = storage.run({"type": "write", "revision": initial["revision"], "text": "safe"})
+        result = subprocess.run([sys.executable, str(Path(storage.__file__))],
+                                input=json.dumps({"type": "write", "revision": saved["revision"],
+                                                  "text": "ñ" * (storage.LIMIT // 2) + "a"}) + "\n",
+                                text=True, capture_output=True, check=True)
+        self.assertEqual(json.loads(result.stdout), {"status": "error", "reason": "note_too_large"})
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(self.note.read_text(), "safe")
+
     def test_protected_limit_stops_saves_without_deleting_data_and_allows_retry(self):
         storage.run({"type": "read"})
         self.note.write_text("base")

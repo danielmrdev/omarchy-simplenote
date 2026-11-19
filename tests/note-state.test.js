@@ -1,6 +1,6 @@
 const test = require("node:test")
 const assert = require("node:assert/strict")
-const { createNoteState } = require("../NoteState.js")
+const { createNoteState, exceedsNoteLimit } = require("../NoteState.js")
 
 function fixture(initial = "") {
   const requests = []
@@ -66,6 +66,33 @@ test("recovery limit is visible, retains pending text, and clears on retry", () 
   assert.equal(requests.length, 0)
   state.retry()
   assert.equal(state.errorReason, "")
+  requests.shift().complete({ status: "ok", revision: "new" })
+  assert.equal(state.dirty, false)
+})
+
+test("size guard counts UTF-8 bytes, including surrogate pairs", () => {
+  const limit = 1024 * 1024
+  for (const unit of ["a", "ñ", "€", "😀"]) {
+    const length = Buffer.byteLength(unit)
+    const exact = unit.repeat(Math.floor(limit / length)) + "a".repeat(limit % length)
+    assert.equal(Buffer.byteLength(exact), limit)
+    assert.equal(exceedsNoteLimit(exact), false)
+    assert.equal(exceedsNoteLimit(exact + "a"), true)
+  }
+})
+
+test("oversized pending text remains editable and retry saves the reduced version", () => {
+  const { state, requests } = fixture("original")
+  const pending = "ñ".repeat(524289)
+  state.edit(pending)
+  state.flush()
+  requests.shift().complete({ status: "error", reason: "note_too_large" })
+  assert.equal(state.errorReason, "note_too_large")
+  assert.equal(state.text, pending)
+  assert.equal(state.dirty, true)
+  state.edit("reduced")
+  state.retry()
+  assert.equal(requests[0].text, "reduced")
   requests.shift().complete({ status: "ok", revision: "new" })
   assert.equal(state.dirty, false)
 })

@@ -23,6 +23,7 @@ Panel {
   }
   function statusText() {
     if (service && service.errorReason === "recovery_limit") return tr("recoveryLimit")
+    if (service && service.errorReason === "note_too_large") return tr("noteTooLarge")
     if (service && service.error) return tr("error")
     if (service && service.conflict) return tr("conflict")
     return tr("error")

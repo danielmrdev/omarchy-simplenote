@@ -1,6 +1,24 @@
 // Pure state machine. The host owns scheduling and the storage adapter.
 // A successful write must mean that the adapter has durably acknowledged
 // the exact snapshot and checked the supplied revision for conflicts.
+// Count UTF-8 bytes without allocating an encoded copy of potentially large
+// pasted text. Stop once the storage limit is known to be exceeded.
+function exceedsNoteLimit(text) {
+  var bytes = 0
+  for (var i = 0; i < text.length; i++) {
+    var c = text.charCodeAt(i)
+    if (c < 0x80) bytes++
+    else if (c < 0x800) bytes += 2
+    else if (c >= 0xd800 && c <= 0xdbff && i + 1 < text.length &&
+             text.charCodeAt(i + 1) >= 0xdc00 && text.charCodeAt(i + 1) <= 0xdfff) {
+      bytes += 4
+      i++
+    } else bytes += 3
+    if (bytes > 1024 * 1024) return true
+  }
+  return false
+}
+
 function createNoteState(dispatch) {
   var state = {
     text: "",
@@ -235,4 +253,6 @@ function createNoteState(dispatch) {
   return state
 }
 
-if (typeof module !== "undefined") module.exports = { createNoteState: createNoteState }
+if (typeof module !== "undefined") module.exports = {
+  createNoteState: createNoteState, exceedsNoteLimit: exceedsNoteLimit
+}

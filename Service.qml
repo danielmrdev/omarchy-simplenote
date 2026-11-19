@@ -41,6 +41,13 @@ Item {
     timedOut = false
     processOutput = ""
     processFailed = false
+    if (operation.type === "write" && NoteState.exceedsNoteLimit(operation.text)) {
+      Qt.callLater(function() {
+        if (root.request === operation)
+          root.finish({ status: "error", reason: "note_too_large" })
+      })
+      return
+    }
     watchdog.restart()
     Qt.callLater(function() {
       if (root.request === operation) process.running = true
