@@ -10,3 +10,5 @@ and releases will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 
 - Initial project documentation.
+- Preliminary bar note panel, editor and local plaintext persistence, pending
+  live-shell verification.
