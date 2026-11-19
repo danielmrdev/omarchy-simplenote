@@ -16,6 +16,24 @@ the plugin has not yet been exercised in the live shell.
 Omarchy plugins run without a sandbox, with the user's permissions. Review a
 plugin and its dependencies before installing it.
 
+## Installation and removal
+
+Omarchy 4.5 and later are the intended target; runtime compatibility remains
+unverified. Python 3 and a Linux filesystem supporting `renameat2` exchange are
+required. There is no network service, account, or root requirement. The
+plugin runs Python as your user and can read and write your note directory.
+
+The repository is currently private. Once a trusted Git URL is available, use
+`omarchy plugin add <git-url>` and follow the prompts; this clones and validates
+the plugin. Enable it with `omarchy plugin enable danielmrdev.simplenote` and
+choose a bar placement if desired. Enabling or changing the bar affects your
+running desktop. No shortcut is installed automatically.
+
+To uninstall, first preserve any visible unsaved text, then run
+`omarchy plugin remove danielmrdev.simplenote` and follow its confirmation
+prompts. Removal retains the separate note data directory described below.
+Inspect that directory and its recovery files before deleting it manually.
+
 ## Editor command and shortcut
 
 With the plugin enabled, open or refocus the editor with:
@@ -62,6 +80,10 @@ then use Retry. Files named `recovery-*.txt` from older plugin versions are
 also left for manual inspection. Removing the plugin does not remove this
 directory or its contents. To delete the data deliberately, remove the
 directory yourself after checking its contents.
+
+For example, after confirming the directory contains nothing you want to keep,
+delete it with `rm -r -- "${XDG_CONFIG_HOME:-$HOME/.config}/omarchy-simplenote"`.
+This permanently removes the note and all recovery copies.
 
 The history limit bounds the number of normal copies, not the size of changes
 written later by external programs to open file descriptors. Such writes, or
