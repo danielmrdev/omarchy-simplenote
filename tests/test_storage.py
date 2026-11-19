@@ -52,8 +52,15 @@ class StorageTests(unittest.TestCase):
 
         with patch.object(storage, "exchange", racing_exchange):
             result = storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})
-        self.assertEqual(result, {"status": "error", "reason": "displaced_conflict"})
-        self.assertEqual(self.note.read_text(), "local")
+        self.assertEqual(result["status"], "conflict")
+        recovered = storage.run({"type": "read", "recovery": result["recovery"]})
+        self.assertEqual(recovered["recoveryText"], "external")
+        self.assertEqual(recovered["text"], "local")
+        saved = storage.run({"type": "write", "text": recovered["recoveryText"],
+                             "revision": recovered["revision"], "recovery": result["recovery"],
+                             "recoveryRevision": recovered["recoveryRevision"]})
+        self.assertEqual(saved["status"], "ok")
+        self.assertEqual(self.note.read_text(), "external")
         self.assertEqual([p.read_text() for p in self.folder.glob("conflict-*.txt")], ["external"])
 
     def test_exchange_failure_does_not_modify_original(self):
@@ -64,6 +71,31 @@ class StorageTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})
         self.assertEqual(self.note.read_text(), "base")
+
+    def test_resolution_rejects_changes_to_either_observed_version(self):
+        storage.run({"type": "read"})
+        self.note.write_text("local")
+        recovery = self.folder / "conflict-123-01234567.txt"
+        recovery.write_text("external")
+        observed = storage.run({"type": "read", "recovery": recovery.name})
+        request = {"type": "write", "text": "local", "revision": observed["revision"],
+                   "recovery": recovery.name, "recoveryRevision": observed["recoveryRevision"]}
+        recovery.write_text("external changed")
+        self.assertEqual(storage.run(request)["status"], "conflict")
+        self.assertEqual(self.note.read_text(), "local")
+        request["recoveryRevision"] = storage.revision(b"external changed")
+        self.note.write_text("new disk change")
+        self.assertEqual(storage.run(request)["status"], "conflict")
+        self.assertEqual(self.note.read_text(), "new disk change")
+        self.assertEqual(recovery.read_text(), "external changed")
+
+    def test_recovery_path_must_be_valid_and_not_a_symlink(self):
+        storage.run({"type": "read"})
+        with self.assertRaises(ValueError):
+            storage.run({"type": "read", "recovery": "../note.txt"})
+        (self.folder / "conflict-123-01234567.txt").symlink_to(self.note)
+        with self.assertRaises(ValueError):
+            storage.run({"type": "read", "recovery": "conflict-123-01234567.txt"})
 
     def test_second_save_retains_displaced_inode(self):
         storage.run({"type": "read"})
@@ -133,7 +165,7 @@ class StorageTests(unittest.TestCase):
             exchange(first, second)
 
         with patch.object(storage, "exchange", racing_exchange):
-            self.assertEqual(storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})["reason"], "displaced_conflict")
+            self.assertEqual(storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})["status"], "conflict")
         pending = self.folder / ".pending-interrupted"
         pending.write_text("pending")
         legacy = self.folder / "recovery-123-01234567.txt"

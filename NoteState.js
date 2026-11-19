@@ -8,6 +8,7 @@ function createNoteState(dispatch) {
     error: false,
     errorReason: "",
     conflict: false,
+    externalText: "",
     loaded: false,
     revision: null
   }
@@ -15,6 +16,8 @@ function createNoteState(dispatch) {
   var flushRequested = false
   var generation = 0
   var externalRevision = null
+  var recovery = null
+  var observedDiskRevision = null
   var disposed = false
 
   state.dispose = function() { disposed = true }
@@ -27,6 +30,7 @@ function createNoteState(dispatch) {
     var completed = false
     dispatch({
       type: "read",
+      recovery: recovery,
       complete: function(result) {
         if (completed || disposed) return
         completed = true
@@ -36,11 +40,28 @@ function createNoteState(dispatch) {
           state.errorReason = result && result.reason || ""
           return
         }
+        if (recovery && observedDiskRevision !== null && observedDiskRevision !== result.revision) {
+          // A new path version takes priority; the previous displaced copy
+          // remains protected on disk for manual inspection.
+          recovery = null
+          externalRevision = result.revision
+          state.externalText = result.text
+          state.conflict = true
+          return
+        }
+        var actualExternalRevision = recovery ? result.recoveryRevision : result.revision
+        var actualExternalText = recovery ? result.recoveryText : result.text
         if (choice) {
-          if (expected === null || expected !== result.revision ||
+          if (expected === null || expected !== actualExternalRevision ||
               (choice === "external" && generation !== editGeneration)) {
-            externalRevision = result.revision
+            externalRevision = actualExternalRevision
+            observedDiskRevision = result.revision
+            state.externalText = actualExternalText
             state.conflict = true
+            return
+          }
+          if (recovery) {
+            writeResolution(choice, result)
             return
           }
           state.revision = result.revision
@@ -55,9 +76,17 @@ function createNoteState(dispatch) {
           }
           return
         }
-        if (result.revision !== state.revision) {
+        if (recovery) {
+          observedDiskRevision = result.revision
+          externalRevision = actualExternalRevision
+          state.externalText = actualExternalText
+          state.conflict = true
+          return
+        }
+        if (result.revision !== state.revision || (state.conflict && externalRevision === null)) {
           if (state.dirty || state.conflict || generation !== editGeneration) {
             externalRevision = result.revision
+            state.externalText = result.text
             state.conflict = true
           } else {
             state.text = result.text
@@ -65,6 +94,48 @@ function createNoteState(dispatch) {
           }
         }
         if (flushRequested && !state.conflict) state.flush()
+      }
+    })
+  }
+
+  function writeResolution(choice, result) {
+    busy = true
+    var selected = choice === "external" ? result.recoveryText : state.text
+    var editGeneration = generation
+    var completed = false
+    dispatch({
+      type: "write", text: selected, revision: result.revision,
+      recovery: recovery, recoveryRevision: result.recoveryRevision,
+      complete: function(outcome) {
+        if (completed || disposed) return
+        completed = true
+        busy = false
+        if (!outcome || outcome.status === "error") {
+          state.error = true
+          state.errorReason = outcome && outcome.reason || ""
+          return
+        }
+        if (outcome.status !== "ok") {
+          if (outcome.recovery) {
+            recovery = outcome.recovery
+            observedDiskRevision = outcome.writtenRevision || null
+          }
+          externalRevision = null
+          return
+        }
+        state.revision = outcome.revision
+        recovery = null
+        observedDiskRevision = null
+        if (choice === "external" && generation !== editGeneration) {
+          state.externalText = selected
+          externalRevision = outcome.revision
+          state.conflict = true
+          return
+        }
+        if (choice === "external") state.text = selected
+        state.dirty = generation !== editGeneration
+        state.conflict = false
+        if (state.dirty && flushRequested) state.flush()
       }
     })
   }
@@ -98,6 +169,7 @@ function createNoteState(dispatch) {
         state.errorReason = ""
         if (generation !== editGeneration || state.dirty) {
           externalRevision = result.revision
+          state.externalText = result.text
           state.conflict = true
           return
         }
@@ -140,6 +212,8 @@ function createNoteState(dispatch) {
         if (result.status !== "ok") {
           state.conflict = true
           externalRevision = null
+          recovery = result.recovery || null
+          observedDiskRevision = result.writtenRevision || null
           return
         }
         state.revision = result.revision

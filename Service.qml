@@ -18,6 +18,7 @@ Item {
   property bool error: false
   property string errorReason: ""
   property bool conflict: false
+  property string externalText: ""
   property bool loaded: false
   property bool timedOut: false
 
@@ -27,6 +28,7 @@ Item {
     error = machine.error
     errorReason = machine.errorReason
     conflict = machine.conflict
+    externalText = machine.externalText
     loaded = machine.loaded
   }
   function dispatch(operation) {
@@ -116,7 +118,8 @@ Item {
     stdinEnabled: true
     onStarted: {
       write(JSON.stringify({ type: root.request.type, text: root.request.text,
-                             revision: root.request.revision }) + "\n")
+                             revision: root.request.revision, recovery: root.request.recovery,
+                             recoveryRevision: root.request.recoveryRevision }) + "\n")
     }
     stdout: StdioCollector { id: output }
     onExited: function(code, status) {

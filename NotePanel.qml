@@ -24,7 +24,6 @@ Panel {
   }
   function statusText() {
     if (service && service.errorReason === "recovery_limit") return tr("recoveryLimit")
-    if (service && service.errorReason === "displaced_conflict") return tr("displacedConflict")
     if (service && service.error) return tr("error")
     if (service && service.conflict) return tr("conflict")
     return tr("error")
@@ -110,6 +109,28 @@ Panel {
         spacing: Style.space(8)
         Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
         Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
+      }
+      Text {
+        visible: root.service && root.service.conflict
+        text: root.tr("externalVersion")
+        color: Commons.Color.foreground
+        font.family: Style.font.family
+      }
+      ScrollView {
+        visible: root.service && root.service.conflict
+        width: parent.width
+        height: visible ? Style.space(80) : 0
+        clip: true
+        TextArea {
+          readOnly: true
+          selectByMouse: true
+          textFormat: TextEdit.PlainText
+          wrapMode: TextEdit.Wrap
+          text: root.service ? root.service.externalText : ""
+          color: Commons.Color.foreground
+          font.family: Style.font.family
+          background: Item {}
+        }
       }
       ScrollView {
         visible: !root.showingAbout
@@ -223,6 +244,28 @@ Panel {
         spacing: Style.space(8)
         Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
         Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
+      }
+      Text {
+        visible: root.service && root.service.conflict
+        text: root.tr("externalVersion")
+        color: Commons.Color.foreground
+        font.family: Style.font.family
+      }
+      ScrollView {
+        visible: root.service && root.service.conflict
+        width: parent.width
+        height: visible ? Style.space(80) : 0
+        clip: true
+        TextArea {
+          readOnly: true
+          selectByMouse: true
+          textFormat: TextEdit.PlainText
+          wrapMode: TextEdit.Wrap
+          text: root.service ? root.service.externalText : ""
+          color: Commons.Color.foreground
+          font.family: Style.font.family
+          background: Item {}
+        }
       }
       ScrollView {
         width: parent.width

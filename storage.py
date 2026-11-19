@@ -66,12 +66,28 @@ def run_locked(folder, request):
     path = folder / "note.txt"
     current = read_file(path)
     actual = ABSENT if current is None else revision(current)
+    recovery = None
+    if request.get("recovery"):
+        name = request["recovery"]
+        if not isinstance(name, str) or not re.fullmatch(r"conflict-[0-9]+-[0-9a-f]{8}\.txt", name):
+            raise ValueError("invalid recovery name")
+        recovery_path = folder / name
+        if recovery_path.is_symlink():
+            raise ValueError("invalid recovery file")
+        recovery = read_file(recovery_path)
+        if recovery is None:
+            raise ValueError("missing recovery file")
     if request["type"] == "read":
-        return {"status": "ok", "text": "" if current is None else current.decode("utf-8"),
-                "revision": actual}
+        result = {"status": "ok", "text": "" if current is None else current.decode("utf-8"),
+                  "revision": actual}
+        if recovery is not None:
+            result.update(recoveryText=recovery.decode("utf-8"), recoveryRevision=revision(recovery))
+        return result
     if request["type"] != "write":
         raise ValueError("unknown request")
     if request["revision"] != actual:
+        return {"status": "conflict"}
+    if recovery is not None and request.get("recoveryRevision") != revision(recovery):
         return {"status": "conflict"}
     data = request["text"].encode("utf-8")
     if len(data) > LIMIT:
@@ -111,7 +127,8 @@ def run_locked(folder, request):
             displaced_inode = False
             displaced = read_file(backup)
             if displaced is None or revision(displaced) != request["revision"]:
-                return {"status": "error", "reason": "displaced_conflict"}
+                return {"status": "conflict", "recovery": backup.name,
+                        "writtenRevision": revision(data)}
             # Only files created by this history policy are eligible for
             # rotation. Legacy recovery files and interrupted/conflict copies
             # may contain unique versions and are left for manual inspection.

@@ -70,15 +70,19 @@ legacy recovery files, can still exhaust disk space.
 
 The helper checks the last-read revision before saving and retains the inode
 displaced by an atomic exchange. If that inode differs, saving pauses with a
-conflict and the external version is in a conflict file; the current note may
-already contain the local version. External programs can hold old file
+conflict and the external version is read from a protected conflict file; the
+current note may already contain the local version. Either version can be
+chosen after the note and protected copy are checked again. If the note changes
+again, the latest note is shown as the external version and the earlier
+displaced copy remains in the conflict file for inspection. External programs can hold old file
 descriptors and write after the check, or replace the path after the plugin's
 write: these changes cannot be reliably detected or coordinated with
 uncooperative programs. A late write to the displaced inode may not raise a
 warning and may be lost after history rotation. Do not edit the note externally
-while using the plugin if that limitation is unacceptable. Inspect protected
-conflict files if a write raced with an external editor. Preserve visible
-unsaved text before disabling the plugin
+while using the plugin if that limitation is unacceptable. Protected conflict
+files remain after resolution and can be inspected or deliberately removed.
+If a helper is interrupted before reporting a conflict, inspect these files
+manually. Preserve visible unsaved text before disabling the plugin
 or restarting the shell, because memory is not persistent.
 
 Notes are limited to 1 MiB of UTF-8. Larger or invalid UTF-8 files report an
