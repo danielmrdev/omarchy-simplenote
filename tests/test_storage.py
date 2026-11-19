@@ -52,7 +52,7 @@ class StorageTests(unittest.TestCase):
 
         with patch.object(storage, "exchange", racing_exchange):
             result = storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})
-        self.assertEqual(result["status"], "conflict")
+        self.assertEqual(result, {"status": "error", "reason": "displaced_conflict"})
         self.assertEqual(self.note.read_text(), "local")
         self.assertEqual([p.read_text() for p in self.folder.glob("conflict-*.txt")], ["external"])
 
@@ -133,7 +133,7 @@ class StorageTests(unittest.TestCase):
             exchange(first, second)
 
         with patch.object(storage, "exchange", racing_exchange):
-            self.assertEqual(storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})["status"], "conflict")
+            self.assertEqual(storage.run({"type": "write", "revision": baseline["revision"], "text": "local"})["reason"], "displaced_conflict")
         pending = self.folder / ".pending-interrupted"
         pending.write_text("pending")
         legacy = self.folder / "recovery-123-01234567.txt"

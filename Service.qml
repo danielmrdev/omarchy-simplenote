@@ -60,6 +60,10 @@ Item {
     machine.retry()
     sync()
   }
+  function resolve(choice) {
+    machine.resolve(choice)
+    sync()
+  }
   function openEditor() { shortcutRouter.open() }
   function closeEditor() { editor.closeEditor() }
 
@@ -79,11 +83,21 @@ Item {
     machine.load()
     sync()
   }
+  Component.onDestruction: if (machine) machine.dispose()
 
   Timer {
     id: debounce
     interval: 500
     onTriggered: root.flush()
+  }
+  Timer {
+    interval: 2000
+    running: true
+    repeat: true
+    onTriggered: {
+      root.machine.refresh()
+      root.sync()
+    }
   }
   Timer {
     id: watchdog

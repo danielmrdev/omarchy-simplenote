@@ -111,7 +111,7 @@ def run_locked(folder, request):
             displaced_inode = False
             displaced = read_file(backup)
             if displaced is None or revision(displaced) != request["revision"]:
-                return {"status": "conflict"}
+                return {"status": "error", "reason": "displaced_conflict"}
             # Only files created by this history policy are eligible for
             # rotation. Legacy recovery files and interrupted/conflict copies
             # may contain unique versions and are left for manual inspection.
