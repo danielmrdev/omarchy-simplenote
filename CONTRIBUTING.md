@@ -21,10 +21,11 @@ find . -name '*.qml' -type f -print0 | xargs -0 /usr/lib/qt6/bin/qmllint -I "$OM
 
 CI gates Qt 6 syntax, duplicate IDs, duplicate bindings and imports, incompatible
 types, read-only writes and unresolved aliases with `scripts/qml_gate.py`.
-It also reports a full Qt 6 lint pass against 4.5.0 shell sources. The gate does
-not check unresolved host types, imports, or unqualified accesses because the
-CI runner lacks Quickshell and the live shell's dynamic imports. Investigate
-the full output; neither pass proves that QML loads in the shell.
+CI also installs Arch's Quickshell and gates imports and unresolved types against
+the pinned 4.5.0 shell sources. The full lint remains advisory because dynamic
+host properties and PanelWindow generate warnings. Investigate that output;
+none of these checks proves that QML loads in the shell. CI itself must be
+observed running before claiming these checks passed there.
 See the [development guide](https://plugins.omarchy.org/develop.html).
 With permission to change the active shell, exercise panel and editor, bar-free
 shortcut and monitor selection, save errors and conflicts, both languages,

@@ -21,6 +21,11 @@ Item {
   property string externalText: ""
   property bool loaded: false
   property bool timedOut: false
+  // Two 1 MiB UTF-8 notes can each expand to six ASCII JSON characters per
+  // byte, plus protocol metadata. Never retain stderr, which may contain data.
+  readonly property int outputLimit: 13 * 1024 * 1024
+  property string processOutput: ""
+  property bool processFailed: false
 
   function sync() {
     text = machine.text
@@ -34,6 +39,8 @@ Item {
   function dispatch(operation) {
     request = operation
     timedOut = false
+    processOutput = ""
+    processFailed = false
     watchdog.restart()
     Qt.callLater(function() {
       if (root.request === operation) process.running = true
@@ -120,12 +127,34 @@ Item {
                              revision: root.request.revision, recovery: root.request.recovery,
                              recoveryRevision: root.request.recoveryRevision }) + "\n")
     }
-    stdout: StdioCollector { id: output }
+    stdout: SplitParser {
+      splitMarker: ""
+      onRead: function(chunk) {
+        if (root.processFailed) return
+        if (root.processOutput.length + chunk.length > root.outputLimit) {
+          root.processFailed = true
+          process.running = false
+        } else {
+          root.processOutput += chunk
+        }
+      }
+    }
+    stderr: SplitParser {
+      splitMarker: ""
+      onRead: function(chunk) {
+        if (chunk.length) {
+          root.processFailed = true
+          process.running = false
+        }
+      }
+    }
     onExited: function(code, status) {
       var result = { status: "error" }
       try {
-        if (code === 0 && !root.timedOut) result = JSON.parse(output.text)
+        if (code === 0 && !root.timedOut && !root.processFailed)
+          result = JSON.parse(root.processOutput)
       } catch (e) {}
+      root.processOutput = ""
       root.finish(result)
     }
   }
