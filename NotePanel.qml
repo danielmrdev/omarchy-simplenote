@@ -13,7 +13,6 @@ Panel {
   property var hostWidget: null
   property var service: null
   property string localeName: "en"
-  property bool editorOpened: false
   property bool showingAbout: false
   readonly property string pluginVersion: "0.1.0"
   function tr(key) { return T.t(key, localeName) }
@@ -31,17 +30,7 @@ Panel {
   function openEditor() {
     if (!service) return
     root.close()
-    service.openEditor(root)
-    editorOpened = true
-    Qt.callLater(function() {
-      editor.cursorPosition = editor.length
-      editor.forceActiveFocus()
-    })
-  }
-  function closeEditor() {
-    if (!editorOpened) return
-    editorOpened = false
-    if (service) service.closeEditor(root)
+    service.openEditor()
   }
 
   KeyboardPanel {
@@ -201,90 +190,4 @@ Panel {
     }
   }
 
-  KeyboardPanel {
-    id: editorPanel
-    bar: root.bar
-    anchorItem: root.anchorItem
-    owner: root.hostWidget
-    open: root.editorOpened
-    centerOnBar: true
-    focusTarget: editor
-    contentWidth: fittedContentWidth(Style.space(560))
-    contentHeight: fittedContentHeight(Style.space(430))
-    Column {
-      anchors.fill: parent
-      spacing: Style.space(8)
-      Item {
-        width: parent.width
-        height: Style.space(32)
-        PanelActionButton {
-          anchors.right: parent.right
-          iconText: "󰅖"
-          tooltipText: root.tr("close")
-          foreground: Commons.Color.foreground
-          fontFamily: Style.font.family
-          onClicked: root.closeEditor()
-        }
-      }
-      Text {
-        width: parent.width
-        visible: root.service && (root.service.error || root.service.conflict)
-        text: root.statusText()
-        textFormat: Text.PlainText
-        wrapMode: Text.Wrap
-        color: Commons.Color.foreground
-      }
-      Button {
-        visible: root.service && root.service.error
-        text: root.tr("retry")
-        onClicked: root.service.retry()
-      }
-      Row {
-        visible: root.service && root.service.conflict && !root.service.error
-        spacing: Style.space(8)
-        Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
-        Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
-      }
-      Text {
-        visible: root.service && root.service.conflict
-        text: root.tr("externalVersion")
-        color: Commons.Color.foreground
-        font.family: Style.font.family
-      }
-      ScrollView {
-        visible: root.service && root.service.conflict
-        width: parent.width
-        height: visible ? Style.space(80) : 0
-        clip: true
-        TextArea {
-          readOnly: true
-          selectByMouse: true
-          textFormat: TextEdit.PlainText
-          wrapMode: TextEdit.Wrap
-          text: root.service ? root.service.externalText : ""
-          color: Commons.Color.foreground
-          font.family: Style.font.family
-          background: Item {}
-        }
-      }
-      ScrollView {
-        width: parent.width
-        height: Math.max(0, parent.height - y)
-        clip: true
-        TextArea {
-          id: editor
-          text: root.service ? root.service.text : ""
-          enabled: !!root.service && root.service.loaded
-          textFormat: TextEdit.PlainText
-          wrapMode: TextEdit.Wrap
-          selectByMouse: true
-          color: Commons.Color.foreground
-          font.family: Style.font.family
-          background: Item {}
-          onTextEdited: if (root.service) root.service.edit(text)
-          Keys.onEscapePressed: function(event) { root.closeEditor(); event.accepted = true }
-        }
-      }
-    }
-  }
 }

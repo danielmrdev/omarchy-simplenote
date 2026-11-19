@@ -18,8 +18,7 @@ plugin and its dependencies before installing it.
 
 ## Editor command and shortcut
 
-With the plugin enabled and its widget present in the active bar, open or
-refocus the editor with:
+With the plugin enabled, open or refocus the editor with:
 
 ```sh
 omarchy-shell danielmrdev.simplenote.editor open
@@ -33,10 +32,10 @@ bind = SUPER, N, exec, omarchy-shell danielmrdev.simplenote.editor toggle
 ```
 
 No binding is installed or modified automatically. The toggle closes an open
-editor or opens it on the focused monitor through the shell's bar routing.
-The installed host requires a live bar widget for this route: without one,
-the command returns `no-live-bar-widget` and cannot open the editor. Focus,
-monitor selection and shortcut behavior have not yet been verified live.
+editor or opens it on the focused monitor. The service owns the editor, so the
+widget is not required in the bar. If the focused monitor is unavailable, it
+falls back to the first available screen. Bar-free operation, focus, monitor
+selection and shortcut behavior have not yet been verified in the live shell.
 
 ## Data and limitations
 
