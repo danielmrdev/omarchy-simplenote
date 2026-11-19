@@ -15,6 +15,28 @@ the plugin has not yet been exercised in the live shell.
 Omarchy plugins run without a sandbox, with the user's permissions. Review a
 plugin and its dependencies before installing it.
 
+## Editor command and shortcut
+
+With the plugin enabled and its widget present in the active bar, open or
+refocus the editor with:
+
+```sh
+omarchy-shell danielmrdev.simplenote.editor open
+```
+
+For a user-configured Hyprland shortcut, add your preferred binding yourself;
+for example:
+
+```conf
+bind = SUPER, N, exec, omarchy-shell danielmrdev.simplenote.editor toggle
+```
+
+No binding is installed or modified automatically. The toggle closes an open
+editor or opens it on the focused monitor through the shell's bar routing.
+The installed host requires a live bar widget for this route: without one,
+the command returns `no-live-bar-widget` and cannot open the editor. Focus,
+monitor selection and shortcut behavior have not yet been verified live.
+
 ## Data and limitations
 
 The note is stored as plaintext at

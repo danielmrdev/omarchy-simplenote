@@ -14,3 +14,5 @@ and releases will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   live-shell verification.
 - Automatic rotation of normal note history, with detected conflicts retained
   separately for manual recovery.
+- Editor open and toggle IPC commands for user-configured shortcuts, subject to
+  the host's live-bar-widget requirement.
