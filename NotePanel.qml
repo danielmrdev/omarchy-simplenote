@@ -14,7 +14,14 @@ Panel {
   property var service: null
   property string localeName: "en"
   property bool editorOpened: false
+  property bool showingAbout: false
+  readonly property string pluginVersion: "0.1.0"
   function tr(key) { return T.t(key, localeName) }
+  function toggleAbout() {
+    showingAbout = !showingAbout
+    aboutFlick.contentY = 0
+    aboutToggle.forceActiveFocus()
+  }
   function statusText() {
     if (service && service.errorReason === "recovery_limit") return tr("recoveryLimit")
     if (service && service.errorReason === "displaced_conflict") return tr("displacedConflict")
@@ -65,12 +72,24 @@ Panel {
           font.bold: true
         }
         PanelActionButton {
+          id: editButton
           anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
           iconText: "󰏫"
           tooltipText: root.tr("edit")
+          focusable: true
           foreground: Commons.Color.foreground
           fontFamily: Style.font.family
           onClicked: root.openEditor()
+        }
+        Button {
+          id: aboutToggle
+          anchors.right: editButton.left
+          anchors.rightMargin: Style.space(8)
+          anchors.verticalCenter: parent.verticalCenter
+          text: root.showingAbout ? root.tr("note") : "v" + root.pluginVersion
+          Accessible.name: root.showingAbout ? root.tr("note") : root.tr("about")
+          onClicked: root.toggleAbout()
         }
       }
       Text {
@@ -93,6 +112,7 @@ Panel {
         Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
       }
       ScrollView {
+        visible: !root.showingAbout
         width: parent.width
         height: Math.max(0, parent.height - y)
         clip: true
@@ -106,6 +126,55 @@ Panel {
           color: Commons.Color.foreground
           font.family: Style.font.family
           background: Item {}
+        }
+      }
+      ScrollView {
+        visible: root.showingAbout
+        width: parent.width
+        height: Math.max(0, parent.height - y)
+        clip: true
+        Flickable {
+          id: aboutFlick
+          contentWidth: width
+          contentHeight: aboutContent.height
+          boundsBehavior: Flickable.StopAtBounds
+          Column {
+            id: aboutContent
+            width: aboutFlick.width
+            spacing: Style.space(12)
+            Row {
+              width: parent.width
+              spacing: Style.space(8)
+              PanelSectionHeader {
+                id: aboutHeader
+                text: root.tr("aboutInfo").toUpperCase()
+              }
+              PanelSectionHeader {
+                width: Math.max(0, parent.width - aboutHeader.width - parent.spacing)
+                text: "v" + root.pluginVersion
+                horizontalAlignment: Text.AlignRight
+              }
+            }
+            Text {
+              width: parent.width
+              text: root.tr("aboutDescription")
+              textFormat: Text.PlainText
+              wrapMode: Text.Wrap
+              color: Commons.Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+            }
+            Text {
+              width: parent.width
+              text: root.tr("aboutPrivacy")
+              textFormat: Text.PlainText
+              wrapMode: Text.Wrap
+              color: Commons.Color.foreground
+              opacity: 0.6
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+            }
+          }
         }
       }
     }

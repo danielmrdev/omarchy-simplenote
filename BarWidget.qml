@@ -10,7 +10,10 @@ BarWidget {
   readonly property string localeName: I18n.language
   readonly property bool opened: popup.opened || popup.editorOpened
   readonly property bool popoutSwitchClosing: popup.popoutSwitchClosing
-  function open() { popup.open() }
+  function open() {
+    if (noteService && noteService.shortcutRouter.editorRequested) popup.openEditor()
+    else popup.open()
+  }
   function close() { popup.close(); popup.closeEditor() }
   function closeForPopoutSwitch() { close() }
   function togglePanel() { opened ? close() : open() }

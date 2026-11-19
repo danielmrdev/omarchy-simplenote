@@ -1,6 +1,8 @@
 import QtQuick
 import Quickshell.Io
+import qs.Commons
 import "NoteState.js" as NoteState
+import "Shortcut.js" as Shortcut
 
 Item {
   id: root
@@ -8,6 +10,9 @@ Item {
   property var machine: null
   property var request: null
   property var editorOwner: null
+  property var shortcutRouter: Shortcut.createRouter(
+    function() { return root.editorOwner },
+    function() { return root.shell ? root.shell.summon("danielmrdev.simplenote", "{}") : false })
   property string text: ""
   property bool dirty: false
   property bool error: false
@@ -66,6 +71,12 @@ Item {
   function closeEditor(owner) {
     flush()
     if (editorOwner === owner) editorOwner = null
+  }
+
+  ShellIpc {
+    target: "danielmrdev.simplenote.editor"
+    function open(): string { return root.shortcutRouter.open() }
+    function toggle(): string { return root.shortcutRouter.toggle() }
   }
 
   Component.onCompleted: {
