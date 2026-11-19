@@ -1,0 +1,32 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# QML, Qt, and build artifacts
+.qmlcache/
+.qtc_clangd/
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+build/
+dist/
+*.qmlc
+*.jsc
+*.qmltypes.user
+*.pro.user*
+
+# Local logs and temporary files
+*.log
+*.tmp
