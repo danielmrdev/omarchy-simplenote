@@ -10,8 +10,11 @@ Edits are saved after a short pause and closing requests an immediate save.
 Errors and conflicts stop saving and retain the unsaved text in memory while the
 plugin is active. Retry is available after an error. External changes are
 checked periodically; conflicts offer a choice of local or external text.
-Omarchy 4.5 is the target, not a runtime compatibility claim:
-the plugin has not yet been exercised in the live shell.
+Omarchy 4.5 and later are the target, not a runtime compatibility claim. An
+earlier version was partially exercised in the shell: IPC opened the editor
+without the widget on DP-3, the panel opened, Escape and the close IPC worked.
+The current version has not been runtime or visually verified; these earlier
+observations do not establish that its interactions work.
 
 Omarchy plugins run without a sandbox, with the user's permissions. Review a
 plugin and its dependencies before installing it.

@@ -7,26 +7,24 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-24.04
+    container: archlinux:base
     steps:
+      - name: Install test and Qt 6 tools
+        run: pacman -Syu --noconfirm --needed git nodejs python jq qt6-declarative
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install QML and manifest tools
-        run: sudo apt-get update && sudo apt-get install -y jq qtdeclarative5-dev-tools qt6-declarative-dev-tools
       - name: Get Omarchy 4.5.0 contract
         run: |
           git clone --no-checkout https://github.com/omacom/omarchy.git "$RUNNER_TEMP/omarchy"
           git -C "$RUNNER_TEMP/omarchy" checkout ac2690cd7be4f47e4a255f5e2e78d904d436b068
       - name: Validate manifest
         run: bash "$RUNNER_TEMP/omarchy/bin/omarchy-plugin-validate" "$GITHUB_WORKSPACE"
-      - name: Check QML syntax
-        run: find . -name '*.qml' -type f -print0 | xargs -0 /usr/lib/qt5/bin/qmllint
+      - name: Gate plugin-owned Qt 6 diagnostics
+        run: python scripts/qml_gate.py /usr/lib/qt6/bin/qmllint "$RUNNER_TEMP/omarchy/shell"
       - name: Run behavior and translation tests
         run: |
           node --test tests/*.test.js
           python3 -m unittest discover -s tests -p 'test_*.py'
-      - name: Report Qt 6 host-import lint warnings
+      - name: Report full Qt 6 host-import lint warnings
         run: |
           echo "Advisory only: the CI runner lacks Quickshell's runtime imports."
           find . -name '*.qml' -type f -print0 | xargs -0 /usr/lib/qt6/bin/qmllint -I "$RUNNER_TEMP/omarchy/shell" || echo "::warning::Qt 6 host-import lint did not pass; inspect output and verify on Omarchy"

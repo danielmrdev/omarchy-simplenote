@@ -1,7 +1,7 @@
 # Contributing
 
 The plugin targets Omarchy 4.5 and later. Static checks do not establish runtime
-compatibility; live-shell and visual checks remain outstanding.
+compatibility; current-version live-shell and visual checks remain outstanding.
 
 ## Getting started
 
@@ -19,14 +19,19 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 find . -name '*.qml' -type f -print0 | xargs -0 /usr/lib/qt6/bin/qmllint -I "$OMARCHY_PATH/shell"
 ```
 
-Qt 6 lint can report unresolved host imports and dynamic shell types; investigate
-its output rather than treating those warnings as a clean check. CI also runs a
-Qt 5 syntax check and an advisory Qt 6 pass against the 4.5.0 shell source.
+CI gates Qt 6 syntax, duplicate IDs, duplicate bindings and imports, incompatible
+types, read-only writes and unresolved aliases with `scripts/qml_gate.py`.
+It also reports a full Qt 6 lint pass against 4.5.0 shell sources. The gate does
+not check unresolved host types, imports, or unqualified accesses because the
+CI runner lacks Quickshell and the live shell's dynamic imports. Investigate
+the full output; neither pass proves that QML loads in the shell.
 See the [development guide](https://plugins.omarchy.org/develop.html).
 With permission to change the active shell, exercise panel and editor, bar-free
 shortcut and monitor selection, save errors and conflicts, both languages,
 disable/re-enable, restart and removal. Compare screenshots with the approved
-design. The tests and static source checks are not substitutes for that work.
+design. The integration fixture connects the real state machine, storage
+helper, router and translations, with source-level checks of QML wiring; it
+does not execute QML, emulate the shell, or verify focus, layout or IPC.
 
 ## Release preparation
 
