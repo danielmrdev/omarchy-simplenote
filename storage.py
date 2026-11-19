@@ -2,6 +2,7 @@
 """Single-note storage. JSON requests arrive on stdin, never in argv."""
 import ctypes
 import errno
+import fcntl
 import hashlib
 import json
 import os
@@ -11,6 +12,7 @@ import time
 import sys
 
 LIMIT = 1024 * 1024
+RECOVERY_LIMIT = 32
 ABSENT = "absent"
 
 
@@ -48,6 +50,17 @@ def exchange(first, second):
 
 def run(request):
     folder = directory()
+    # Serialize plugin helpers so the count check and creation form one
+    # operation. This lock does not coordinate arbitrary external editors.
+    lock_fd = os.open(folder / ".storage.lock", os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        return run_locked(folder, request)
+    finally:
+        os.close(lock_fd)
+
+
+def run_locked(folder, request):
     path = folder / "note.txt"
     current = read_file(path)
     actual = ABSENT if current is None else revision(current)
@@ -61,6 +74,12 @@ def run(request):
     data = request["text"].encode("utf-8")
     if len(data) > LIMIT:
         raise ValueError("note too large")
+    # Pending files may hold displaced notes after an interrupted exchange.
+    # Count both kinds and never clean them up without the user's decision.
+    recoveries = sum(1 for entry in folder.iterdir()
+                     if entry.name.startswith(("recovery-", ".pending-")))
+    if recoveries >= RECOVERY_LIMIT:
+        return {"status": "error", "reason": "recovery_limit"}
     fd, temporary = tempfile.mkstemp(prefix=".pending-", dir=folder)
     temporary = Path(temporary)
     displaced_inode = False

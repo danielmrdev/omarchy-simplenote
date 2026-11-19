@@ -6,6 +6,7 @@ function createNoteState(dispatch) {
     text: "",
     dirty: false,
     error: false,
+    errorReason: "",
     conflict: false,
     loaded: false,
     revision: null
@@ -27,11 +28,13 @@ function createNoteState(dispatch) {
         busy = false
         if (!result || result.status !== "ok") {
           state.error = true
+          state.errorReason = result && result.reason || ""
           return
         }
         state.loaded = true
         state.revision = result.revision
         state.error = false
+        state.errorReason = ""
         if (generation !== editGeneration || state.dirty) {
           state.conflict = true
           return
@@ -69,6 +72,7 @@ function createNoteState(dispatch) {
         busy = false
         if (!result || result.status === "error") {
           state.error = true
+          state.errorReason = result && result.reason || ""
           return
         }
         if (result.status !== "ok") {
@@ -86,6 +90,7 @@ function createNoteState(dispatch) {
   state.retry = function() {
     if (state.conflict) return
     state.error = false
+    state.errorReason = ""
     if (!state.loaded) state.load()
     else state.flush()
   }

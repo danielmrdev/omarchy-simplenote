@@ -11,6 +11,7 @@ Item {
   property string text: ""
   property bool dirty: false
   property bool error: false
+  property string errorReason: ""
   property bool conflict: false
   property bool loaded: false
   property bool timedOut: false
@@ -19,6 +20,7 @@ Item {
     text = machine.text
     dirty = machine.dirty
     error = machine.error
+    errorReason = machine.errorReason
     conflict = machine.conflict
     loaded = machine.loaded
   }

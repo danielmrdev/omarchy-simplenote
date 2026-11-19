@@ -25,11 +25,22 @@ permissions. Python 3 and a Linux filesystem supporting `renameat2` exchange
 are required. No root privileges or network access are needed.
 
 Each replacement keeps the displaced file as `recovery-*.txt` in the same
-directory. These files contain plaintext, accumulate over time, and are not
-deleted automatically. If an error occurs during a replacement, a
-`.pending-*` file may also contain a displaced version. Removing the plugin
-does not remove this directory or its contents. To delete the data deliberately,
-remove the directory yourself after checking its contents.
+directory. These files contain plaintext and are not deleted automatically.
+If an error occurs during a replacement, a `.pending-*` file may also contain
+a displaced version. At 32 recovery and pending files combined, saving pauses
+with a visible error; unsaved edits remain in memory while the plugin is
+active. To resume, first close external editors, inspect these files in the
+data directory, deliberately remove copies you no longer need, and use Retry.
+Deleting a recovery file can discard a late external change, so there is no
+automatic cleanup. Removing the plugin does not remove this directory or its
+contents. To delete the data deliberately, remove the directory yourself
+after checking its contents.
+
+The cap limits the number of files created by cooperating plugin helpers, not
+the size of changes written later by other programs to their open file
+descriptors. Such external writes can still exhaust disk space. The cap may
+require cleanup after as few as 32 saves; this is a deliberate safety tradeoff,
+not a rolling backup policy.
 
 The helper checks the last-read revision before saving and retains the inode
 displaced by an atomic exchange. If that inode differs, saving pauses with a

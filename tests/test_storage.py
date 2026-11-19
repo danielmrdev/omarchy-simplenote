@@ -92,6 +92,26 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         self.assertEqual(request({"type": "read"})["text"], "line 1\nline 2")
 
+    def test_recovery_limit_stops_saves_without_deleting_data_and_allows_retry(self):
+        storage.run({"type": "read"})
+        self.note.write_text("base")
+        baseline = storage.run({"type": "read"})
+        for number in range(storage.RECOVERY_LIMIT - 1):
+            (self.folder / f"recovery-{number}.txt").write_text(f"old-{number}")
+        pending = self.folder / ".pending-interrupted"
+        pending.write_text("possibly displaced")
+        request = {"type": "write", "revision": baseline["revision"], "text": "local"}
+        self.assertEqual(storage.run(request), {"status": "error", "reason": "recovery_limit"})
+        self.assertEqual(self.note.read_text(), "base")
+        self.assertEqual(pending.read_text(), "possibly displaced")
+        self.assertEqual(len(list(self.folder.glob("recovery-*.txt"))), storage.RECOVERY_LIMIT - 1)
+        # Removing a reviewed copy is an explicit user decision.
+        (self.folder / "recovery-0.txt").unlink()
+        self.assertEqual(storage.run(request)["status"], "ok")
+        self.assertEqual(self.note.read_text(), "local")
+        self.assertEqual(len(list(self.folder.glob("recovery-*.txt"))), storage.RECOVERY_LIMIT - 1)
+        self.assertEqual(pending.read_text(), "possibly displaced")
+
 
 if __name__ == "__main__":
     unittest.main()

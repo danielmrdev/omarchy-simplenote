@@ -1,5 +1,7 @@
 const test = require("node:test")
 const assert = require("node:assert/strict")
+const fs = require("node:fs")
+const path = require("node:path")
 const i18n = require("../i18n.js")
 
 test("English and Spanish have matching non-empty catalogs", () => {
@@ -16,4 +18,10 @@ test("Spanish locale variants and English fallback", () => {
   }
   assert.equal(i18n.t("empty", "fr-FR"), i18n.en.empty)
   assert.equal(i18n.t("missing", "es"), "missing")
+})
+
+test("the widget binds language to Omarchy rather than the system locale", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../BarWidget.qml"), "utf8")
+  assert.match(source, /readonly property string localeName:\s*I18n\.language/)
+  assert.doesNotMatch(source, /Qt\.locale\(\)/)
 })

@@ -7,8 +7,7 @@ BarWidget {
   id: root
   moduleName: "danielmrdev.simplenote"
   readonly property var noteService: bar && bar.shell ? bar.shell.serviceFor(moduleName) : null
-  readonly property string localeName: Qt.locale().uiLanguages.length
-    ? Qt.locale().uiLanguages[0] : Qt.locale().name
+  readonly property string localeName: I18n.language
   readonly property bool opened: popup.opened || popup.editorOpened
   readonly property bool popoutSwitchClosing: popup.popoutSwitchClosing
   function open() { popup.open() }

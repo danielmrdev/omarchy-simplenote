@@ -54,6 +54,22 @@ test("write failure retains text and requires explicit retry", () => {
   assert.equal(requests.shift().text, "unsaved")
 })
 
+test("recovery limit is visible, retains pending text, and clears on retry", () => {
+  const { state, requests } = fixture()
+  state.edit("unsaved")
+  state.flush()
+  requests.shift().complete({ status: "error", reason: "recovery_limit" })
+  assert.equal(state.errorReason, "recovery_limit")
+  assert.equal(state.text, "unsaved")
+  assert.equal(state.dirty, true)
+  state.flush()
+  assert.equal(requests.length, 0)
+  state.retry()
+  assert.equal(state.errorReason, "")
+  requests.shift().complete({ status: "ok", revision: "new" })
+  assert.equal(state.dirty, false)
+})
+
 test("conflicting disk revision blocks automatic saves without losing local text", () => {
   const { state, requests } = fixture("disk")
   state.edit("local")

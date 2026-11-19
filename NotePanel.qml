@@ -15,6 +15,11 @@ Panel {
   property string localeName: "en"
   property bool editorOpened: false
   function tr(key) { return T.t(key, localeName) }
+  function statusText() {
+    if (service && service.conflict) return tr("conflict")
+    if (service && service.errorReason === "recovery_limit") return tr("recoveryLimit")
+    return tr("error")
+  }
   function openEditor() {
     if (!service) return
     root.close()
@@ -69,7 +74,7 @@ Panel {
       Text {
         width: parent.width
         visible: root.service && (root.service.error || root.service.conflict)
-        text: root.service && root.service.conflict ? root.tr("conflict") : root.tr("error")
+        text: root.statusText()
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
         color: Commons.Color.foreground
@@ -126,7 +131,7 @@ Panel {
       Text {
         width: parent.width
         visible: root.service && (root.service.error || root.service.conflict)
-        text: root.service && root.service.conflict ? root.tr("conflict") : root.tr("error")
+        text: root.statusText()
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
         color: Commons.Color.foreground
