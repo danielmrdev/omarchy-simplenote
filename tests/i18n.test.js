@@ -20,6 +20,17 @@ test("Spanish locale variants and English fallback", () => {
   assert.equal(i18n.t("missing", "es"), "missing")
 })
 
+test("size error states the UTF-8 limit and recovery action in both languages", () => {
+  assert.match(i18n.t("noteTooLarge", "en"), /1 MiB.*1,048,576 UTF-8 bytes/)
+  assert.match(i18n.t("noteTooLarge", "en"), /Reduce.*back up.*retry/)
+  assert.match(i18n.t("noteTooLarge", "es"), /1 MiB.*1\.048\.576 bytes UTF-8/)
+  assert.match(i18n.t("noteTooLarge", "es"), /Reduce.*copia de seguridad.*reinténtalo/)
+  for (const name of ["Editor.qml", "NotePanel.qml"]) {
+    const source = fs.readFileSync(path.join(__dirname, "..", name), "utf8")
+    assert.match(source, /errorReason === "note_too_large".*tr\("noteTooLarge"\)/)
+  }
+})
+
 test("the widget binds language to Omarchy rather than the system locale", () => {
   const source = fs.readFileSync(path.join(__dirname, "../BarWidget.qml"), "utf8")
   assert.match(source, /readonly property string localeName:\s*I18n\.language/)

@@ -112,7 +112,10 @@ manually. Preserve visible unsaved text before disabling the plugin
 or restarting the shell, because memory is not persistent.
 
 Notes are limited to 1 MiB of UTF-8. Larger or invalid UTF-8 files report an
-error rather than being overwritten.
+error rather than being overwritten. If a note or protected recovery copy is
+too large, back it up before reducing the file externally and retrying. For an
+oversized unsaved edit, reduce the text in the editor and retry; it remains in
+memory only while the plugin is active.
 
 ## Development
 

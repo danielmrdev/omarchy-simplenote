@@ -18,6 +18,10 @@ PROTECTED_LIMIT = 32
 ABSENT = "absent"
 
 
+class NoteTooLarge(ValueError):
+    """The note or a protected recovery copy exceeds the safe read limit."""
+
+
 def revision(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -34,7 +38,7 @@ def read_file(path):
         with path.open("rb") as stream:
             data = stream.read(LIMIT + 1)
         if len(data) > LIMIT:
-            raise ValueError("note too large")
+            raise NoteTooLarge("note too large")
         return data
     except FileNotFoundError:
         return None
@@ -91,7 +95,7 @@ def run_locked(folder, request):
         return {"status": "conflict"}
     data = request["text"].encode("utf-8")
     if len(data) > LIMIT:
-        raise ValueError("note too large")
+        return {"status": "error", "reason": "note_too_large"}
     # Interrupted operations and detected conflicts may hold unique data.
     # Never rotate those; bound them separately and report when full.
     protected = sum(1 for entry in folder.iterdir()
@@ -154,6 +158,8 @@ def main():
     try:
         request = json.loads(sys.stdin.readline(LIMIT * 8 + 4096))
         print(json.dumps(run(request), ensure_ascii=True))
+    except NoteTooLarge:
+        print(json.dumps({"status": "error", "reason": "note_too_large"}))
     except (OSError, ValueError, KeyError, TypeError, UnicodeError):
         print(json.dumps({"status": "error"}))
 
