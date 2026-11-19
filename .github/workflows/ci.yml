@@ -24,6 +24,7 @@ jobs:
         run: |
           node --test tests/*.test.js
           python3 -m unittest discover -s tests -p 'test_*.py'
+          QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/tst_editor.qml
       - name: Report full Qt 6 host-import lint warnings
         run: |
           echo "Advisory only: the CI runner lacks Quickshell's runtime imports."

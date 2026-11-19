@@ -107,7 +107,8 @@ test("QML wiring connects shared state, controls, locales and lifecycle", () => 
   assert.match(panel, /service\.openEditor\(\)/)
   assert.match(editor, /onTextEdited:.*service\.edit\(text\)/)
   assert.match(editor, /if \(service\) service\.flush\(\)/)
-  assert.match(editor, /Keys\.onEscapePressed:.*root\.closeEditor\(\)/)
+  assert.match(editor, /onEscapeRequested:\s*root\.closeEditor\(\)/)
+  assert.match(read("EditorFocus.qml"), /Keys\.onEscapePressed/)
   assert.match(service, /Component\.onDestruction:.*machine\.dispose\(\)/)
   assert.match(service, /target:\s*"danielmrdev\.simplenote\.editor"/)
   for (const source of [panel, editor]) {
