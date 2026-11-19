@@ -1,37 +1,41 @@
 const test = require("node:test")
 const assert = require("node:assert/strict")
-const { createRouter } = require("../Shortcut.js")
+const fs = require("node:fs")
+const path = require("node:path")
+const { createRouter, selectScreen } = require("../Shortcut.js")
 
-test("open routes to the active widget and reopens the same editor", () => {
-  let owner = null
+test("open and toggle address the same service-owned editor without a bar", () => {
+  let visible = false
   let opens = 0
-  const router = createRouter(() => owner, () => {
-    assert.equal(router.editorRequested, true)
-    owner = { openEditor() { opens++ }, closeEditor() { owner = null } }
-    owner.openEditor()
-    return true
-  })
+  let closes = 0
+  const router = createRouter(() => visible, () => { visible = true; opens++ },
+    () => { visible = false; closes++ })
   assert.equal(router.open(), "ok")
   assert.equal(router.open(), "ok")
   assert.equal(opens, 2)
-  assert.equal(router.editorRequested, false)
+  assert.equal(router.toggle(), "ok")
+  assert.equal(closes, 1)
+  assert.equal(router.toggle(), "ok")
+  assert.equal(opens, 3)
 })
 
-test("toggle closes the existing editor or opens one", () => {
-  let owner = null
-  const router = createRouter(() => owner, () => {
-    owner = { closeEditor() { owner = null } }
-    return true
-  })
-  assert.equal(router.toggle(), "ok")
-  assert.ok(owner)
-  assert.equal(router.toggle(), "ok")
-  assert.equal(owner, null)
+test("screen selection uses the focused monitor with a safe fallback", () => {
+  const screens = [{ name: "one" }, { name: "two" }]
+  assert.equal(selectScreen(screens, "two"), screens[1])
+  assert.equal(selectScreen(screens, "missing"), screens[0])
+  assert.equal(selectScreen([], "one"), null)
 })
 
-test("bar-free operation reports the host limitation and clears the request", () => {
-  const router = createRouter(() => null, () => false)
-  assert.equal(router.open(), "no-live-bar-widget")
-  assert.equal(router.editorRequested, false)
-  assert.equal(router.toggle(), "no-live-bar-widget")
+test("the enabled service owns IPC and the single editor; the reader uses it", () => {
+  const read = name => fs.readFileSync(path.join(__dirname, "..", name), "utf8")
+  const service = read("Service.qml")
+  const panel = read("NotePanel.qml")
+  const manifest = JSON.parse(read("manifest.json"))
+  assert.equal(manifest.entryPoints.service, "Service.qml")
+  assert.match(service, /target:\s*"danielmrdev\.simplenote\.editor"/)
+  assert.match(service, /function open\(\): string \{ return root\.shortcutRouter\.open\(\) \}/)
+  assert.match(service, /function toggle\(\): string \{ return root\.shortcutRouter\.toggle\(\) \}/)
+  assert.equal((service.match(/\bEditor\s*\{/g) || []).length, 1)
+  assert.match(panel, /service\.openEditor\(\)/)
+  assert.doesNotMatch(service, /shell\.summon|findPanelWidget/)
 })

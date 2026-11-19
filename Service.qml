@@ -9,10 +9,10 @@ Item {
   property var shell: null
   property var machine: null
   property var request: null
-  property var editorOwner: null
   property var shortcutRouter: Shortcut.createRouter(
-    function() { return root.editorOwner },
-    function() { return root.shell ? root.shell.summon("danielmrdev.simplenote", "{}") : false })
+    function() { return editor.opened },
+    function() { editor.openEditor() },
+    function() { editor.closeEditor() })
   property string text: ""
   property bool dirty: false
   property bool error: false
@@ -60,13 +60,12 @@ Item {
     machine.retry()
     sync()
   }
-  function openEditor(owner) {
-    if (editorOwner && editorOwner !== owner) editorOwner.closeEditor()
-    editorOwner = owner
-  }
-  function closeEditor(owner) {
-    flush()
-    if (editorOwner === owner) editorOwner = null
+  function openEditor() { shortcutRouter.open() }
+  function closeEditor() { editor.closeEditor() }
+
+  Editor {
+    id: editor
+    service: root
   }
 
   ShellIpc {

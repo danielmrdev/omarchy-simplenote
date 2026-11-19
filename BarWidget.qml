@@ -8,13 +8,10 @@ BarWidget {
   moduleName: "danielmrdev.simplenote"
   readonly property var noteService: bar && bar.shell ? bar.shell.serviceFor(moduleName) : null
   readonly property string localeName: I18n.language
-  readonly property bool opened: popup.opened || popup.editorOpened
+  readonly property bool opened: popup.opened
   readonly property bool popoutSwitchClosing: popup.popoutSwitchClosing
-  function open() {
-    if (noteService && noteService.shortcutRouter.editorRequested) popup.openEditor()
-    else popup.open()
-  }
-  function close() { popup.close(); popup.closeEditor() }
+  function open() { popup.open() }
+  function close() { popup.close() }
   function closeForPopoutSwitch() { close() }
   function togglePanel() { opened ? close() : open() }
   implicitWidth: button.implicitWidth

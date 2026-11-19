@@ -1,29 +1,21 @@
-function createRouter(getOwner, summon) {
-  var router = {
-    editorRequested: false,
-    open: function() {
-      var owner = getOwner()
-      if (owner) {
-        owner.openEditor()
-        return "ok"
-      }
-      router.editorRequested = true
-      try {
-        return summon() ? "ok" : "no-live-bar-widget"
-      } finally {
-        router.editorRequested = false
-      }
-    },
-    toggle: function() {
-      var owner = getOwner()
-      if (owner) {
-        owner.closeEditor()
-        return "ok"
-      }
-      return router.open()
-    }
-  }
-  return router
+function selectScreen(screens, focusedName) {
+  for (var i = 0; i < screens.length; i++)
+    if (screens[i].name === focusedName) return screens[i]
+  return screens.length ? screens[0] : null
 }
 
-if (typeof module !== "undefined") module.exports = { createRouter: createRouter }
+function createRouter(isOpen, openEditor, closeEditor) {
+  return {
+    open: function() {
+      openEditor()
+      return "ok"
+    },
+    toggle: function() {
+      if (isOpen()) closeEditor()
+      else openEditor()
+      return "ok"
+    }
+  }
+}
+
+if (typeof module !== "undefined") module.exports = { createRouter: createRouter, selectScreen: selectScreen }
