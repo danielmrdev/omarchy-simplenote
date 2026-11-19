@@ -14,6 +14,13 @@ Once the plugin exists, validate its manifest and QML against the target
 Omarchy shell. See the [development guide](https://plugins.omarchy.org/develop.html)
 for the current commands.
 
+Run the editor focus regression with Qt 6 Quick Test (offscreen, without the
+running shell):
+
+```sh
+QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/tst_editor.qml
+```
+
 ## Release preparation
 
 Before publishing, ensure the README describes the actual functionality,

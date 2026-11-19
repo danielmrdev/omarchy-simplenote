@@ -39,3 +39,9 @@ test("the enabled service owns IPC and the single editor; the reader uses it", (
   assert.match(panel, /service\.openEditor\(\)/)
   assert.doesNotMatch(service, /shell\.summon|findPanelWidget/)
 })
+
+test("the editor connects its always-enabled focus scope to the close route", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../Editor.qml"), "utf8")
+  assert.match(source, /EditorFocus\s*\{[\s\S]*?onEscapeRequested:\s*root\.closeEditor\(\)/)
+  assert.match(source, /keyScope\.forceActiveFocus\(\)/)
+})
