@@ -12,6 +12,8 @@ TestCase {
 
   property bool opened: false
   property bool loaded: false
+  property int edits: 0
+  property int retries: 0
   Plugin.EditorFocus {
     id: scope
     anchors.fill: parent
@@ -19,8 +21,14 @@ TestCase {
     TextArea {
       id: editor
       enabled: testCase.loaded
+      onTextEdited: testCase.edits++
     }
-    Button { id: other }
+    Button {
+      id: other
+      y: 100
+      text: "Retry"
+      onClicked: testCase.retries++
+    }
   }
 
   function test_escape_before_load() {
@@ -43,5 +51,18 @@ TestCase {
     other.forceActiveFocus()
     keyClick(Qt.Key_Escape)
     compare(opened, false)
+  }
+  function test_typing_and_retry_keyboard_activation() {
+    loaded = true
+    editor.text = ""
+    edits = 0
+    retries = 0
+    editor.forceActiveFocus()
+    keyClick(Qt.Key_N)
+    compare(editor.text, "n")
+    verify(edits > 0)
+    other.forceActiveFocus()
+    keyClick(Qt.Key_Space)
+    compare(retries, 1)
   }
 }

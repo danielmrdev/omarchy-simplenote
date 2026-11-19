@@ -15,6 +15,8 @@ earlier version was partially exercised in the shell: IPC opened the editor
 without the widget on DP-3, the panel opened, Escape and the close IPC worked.
 The current version has not been runtime or visually verified; these earlier
 observations do not establish that its interactions work.
+In particular, immediate Escape dismissal before Wayland grants keyboard focus
+has not been confirmed in the target shell.
 
 Omarchy plugins run without a sandbox, with the user's permissions. Review a
 plugin and its dependencies before installing it.

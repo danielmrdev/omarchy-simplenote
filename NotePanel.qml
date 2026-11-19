@@ -80,109 +80,124 @@ Panel {
           onClicked: root.toggleAbout()
         }
       }
-      Text {
-        width: parent.width
-        visible: root.service && (root.service.error || root.service.conflict)
-        text: root.statusText()
-        textFormat: Text.PlainText
-        wrapMode: Text.Wrap
-        color: Commons.Color.foreground
-      }
-      Button {
-        visible: root.service && root.service.error
-        text: root.tr("retry")
-        onClicked: root.service.retry()
-      }
-      Row {
-        visible: root.service && root.service.conflict && !root.service.error
-        spacing: Style.space(8)
-        Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
-        Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
-      }
-      Text {
-        visible: root.service && root.service.conflict
-        text: root.tr("externalVersion")
-        color: Commons.Color.foreground
-        font.family: Style.font.family
-      }
       ScrollView {
-        visible: root.service && root.service.conflict
-        width: parent.width
-        height: visible ? Style.space(80) : 0
-        clip: true
-        TextArea {
-          readOnly: true
-          selectByMouse: true
-          textFormat: TextEdit.PlainText
-          wrapMode: TextEdit.Wrap
-          text: root.service ? root.service.externalText : ""
-          color: Commons.Color.foreground
-          font.family: Style.font.family
-          background: Item {}
-        }
-      }
-      ScrollView {
-        visible: !root.showingAbout
-        width: parent.width
-        height: Math.max(0, parent.height - y)
-        clip: true
-        TextArea {
-          readOnly: true
-          selectByMouse: true
-          textFormat: TextEdit.PlainText
-          wrapMode: TextEdit.Wrap
-          text: !root.service || !root.service.loaded ? root.tr("loading")
-            : root.service.text === "" ? root.tr("empty") : root.service.text
-          color: Commons.Color.foreground
-          font.family: Style.font.family
-          background: Item {}
-        }
-      }
-      ScrollView {
-        visible: root.showingAbout
+        id: bodyViewport
         width: parent.width
         height: Math.max(0, parent.height - y)
         clip: true
         Flickable {
-          id: aboutFlick
           contentWidth: width
-          contentHeight: aboutContent.height
-          boundsBehavior: Flickable.StopAtBounds
+          contentHeight: bodyContent.height
           Column {
-            id: aboutContent
-            width: aboutFlick.width
-            spacing: Style.space(12)
-            Row {
+            id: bodyContent
+            width: parent.width
+            spacing: Style.space(8)
+            Text {
               width: parent.width
+              visible: root.service && (root.service.error || root.service.conflict)
+              text: root.statusText()
+              textFormat: Text.PlainText
+              wrapMode: Text.Wrap
+              color: Commons.Color.foreground
+            }
+            Button {
+              visible: root.service && root.service.error
+              text: root.tr("retry")
+              onClicked: root.service.retry()
+            }
+            Column {
+              visible: root.service && root.service.conflict && !root.service.error
               spacing: Style.space(8)
-              PanelSectionHeader {
-                id: aboutHeader
-                text: root.tr("aboutInfo").toUpperCase()
-              }
-              PanelSectionHeader {
-                width: Math.max(0, parent.width - aboutHeader.width - parent.spacing)
-                text: "v" + root.pluginVersion
-                horizontalAlignment: Text.AlignRight
-              }
+              Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
+              Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
             }
             Text {
-              width: parent.width
-              text: root.tr("aboutDescription")
-              textFormat: Text.PlainText
-              wrapMode: Text.Wrap
+              visible: root.service && root.service.conflict
+              text: root.tr("externalVersion")
               color: Commons.Color.foreground
               font.family: Style.font.family
-              font.pixelSize: Style.font.body
             }
-            Text {
+            ScrollView {
+              visible: root.service && root.service.conflict
               width: parent.width
-              text: root.tr("aboutPrivacy")
-              textFormat: Text.PlainText
-              wrapMode: Text.Wrap
-              color: Commons.Color.foreground
-              opacity: 0.6
-              font.family: Style.font.family
-              font.pixelSize: Style.font.body
+              height: visible ? Style.space(80) : 0
+              clip: true
+              TextArea {
+                readOnly: true
+                selectByMouse: true
+                textFormat: TextEdit.PlainText
+                wrapMode: TextEdit.Wrap
+                text: root.service ? root.service.externalText : ""
+                color: Commons.Color.foreground
+                font.family: Style.font.family
+                background: Item {}
+              }
+            }
+            ScrollView {
+              visible: !root.showingAbout
+              width: parent.width
+              height: visible ? Math.max(Style.space(120), bodyViewport.availableHeight - y) : 0
+              clip: true
+              TextArea {
+                readOnly: true
+                selectByMouse: true
+                textFormat: TextEdit.PlainText
+                wrapMode: TextEdit.Wrap
+                text: !root.service || !root.service.loaded ? root.tr("loading")
+                  : root.service.text === "" ? root.tr("empty") : root.service.text
+                color: Commons.Color.foreground
+                font.family: Style.font.family
+                background: Item {}
+              }
+            }
+            ScrollView {
+              visible: root.showingAbout
+              width: parent.width
+              height: visible ? Math.max(Style.space(120), bodyViewport.availableHeight - y) : 0
+              clip: true
+              Flickable {
+                id: aboutFlick
+                contentWidth: width
+                contentHeight: aboutContent.height
+                boundsBehavior: Flickable.StopAtBounds
+                Column {
+                  id: aboutContent
+                  width: aboutFlick.width
+                  spacing: Style.space(12)
+                  Row {
+                    width: parent.width
+                    spacing: Style.space(8)
+                    PanelSectionHeader {
+                      id: aboutHeader
+                      text: root.tr("aboutInfo").toUpperCase()
+                    }
+                    PanelSectionHeader {
+                      width: Math.max(0, parent.width - aboutHeader.width - parent.spacing)
+                      text: "v" + root.pluginVersion
+                      horizontalAlignment: Text.AlignRight
+                    }
+                  }
+                  Text {
+                    width: parent.width
+                    text: root.tr("aboutDescription")
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    color: Commons.Color.foreground
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.body
+                  }
+                  Text {
+                    width: parent.width
+                    text: root.tr("aboutPrivacy")
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    color: Commons.Color.foreground
+                    opacity: 0.6
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.body
+                  }
+                }
+              }
             }
           }
         }
