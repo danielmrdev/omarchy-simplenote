@@ -16,8 +16,10 @@ Panel {
   property bool editorOpened: false
   function tr(key) { return T.t(key, localeName) }
   function statusText() {
-    if (service && service.conflict) return tr("conflict")
     if (service && service.errorReason === "recovery_limit") return tr("recoveryLimit")
+    if (service && service.errorReason === "displaced_conflict") return tr("displacedConflict")
+    if (service && service.error) return tr("error")
+    if (service && service.conflict) return tr("conflict")
     return tr("error")
   }
   function openEditor() {
@@ -80,9 +82,15 @@ Panel {
         color: Commons.Color.foreground
       }
       Button {
-        visible: root.service && root.service.error && !root.service.conflict
+        visible: root.service && root.service.error
         text: root.tr("retry")
         onClicked: root.service.retry()
+      }
+      Row {
+        visible: root.service && root.service.conflict && !root.service.error
+        spacing: Style.space(8)
+        Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
+        Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
       }
       ScrollView {
         width: parent.width
@@ -137,9 +145,15 @@ Panel {
         color: Commons.Color.foreground
       }
       Button {
-        visible: root.service && root.service.error && !root.service.conflict
+        visible: root.service && root.service.error
         text: root.tr("retry")
         onClicked: root.service.retry()
+      }
+      Row {
+        visible: root.service && root.service.conflict && !root.service.error
+        spacing: Style.space(8)
+        Button { text: root.tr("keepLocal"); onClicked: root.service.resolve("local") }
+        Button { text: root.tr("loadExternal"); onClicked: root.service.resolve("external") }
       }
       ScrollView {
         width: parent.width

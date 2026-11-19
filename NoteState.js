@@ -14,6 +14,67 @@ function createNoteState(dispatch) {
   var busy = false
   var flushRequested = false
   var generation = 0
+  var externalRevision = null
+  var disposed = false
+
+  state.dispose = function() { disposed = true }
+
+  function read(choice) {
+    if (busy || state.error) return
+    busy = true
+    var editGeneration = generation
+    var expected = externalRevision
+    var completed = false
+    dispatch({
+      type: "read",
+      complete: function(result) {
+        if (completed || disposed) return
+        completed = true
+        busy = false
+        if (!result || result.status !== "ok") {
+          state.error = true
+          state.errorReason = result && result.reason || ""
+          return
+        }
+        if (choice) {
+          if (expected === null || expected !== result.revision ||
+              (choice === "external" && generation !== editGeneration)) {
+            externalRevision = result.revision
+            state.conflict = true
+            return
+          }
+          state.revision = result.revision
+          state.conflict = false
+          if (choice === "external") {
+            state.text = result.text
+            state.dirty = false
+            flushRequested = false
+          } else {
+            state.dirty = true
+            state.flush()
+          }
+          return
+        }
+        if (result.revision !== state.revision) {
+          if (state.dirty || state.conflict || generation !== editGeneration) {
+            externalRevision = result.revision
+            state.conflict = true
+          } else {
+            state.text = result.text
+            state.revision = result.revision
+          }
+        }
+        if (flushRequested && !state.conflict) state.flush()
+      }
+    })
+  }
+
+  state.refresh = function() {
+    if (state.loaded) read(null)
+  }
+  state.resolve = function(choice) {
+    if (state.conflict && (choice === "local" || choice === "external")) read(choice)
+  }
 
   state.load = function() {
     if (busy || state.loaded || state.conflict) return
@@ -23,7 +84,7 @@ function createNoteState(dispatch) {
     dispatch({
       type: "read",
       complete: function(result) {
-        if (completed) return
+        if (completed || disposed) return
         completed = true
         busy = false
         if (!result || result.status !== "ok") {
@@ -36,6 +97,7 @@ function createNoteState(dispatch) {
         state.error = false
         state.errorReason = ""
         if (generation !== editGeneration || state.dirty) {
+          externalRevision = result.revision
           state.conflict = true
           return
         }
@@ -67,7 +129,7 @@ function createNoteState(dispatch) {
       text: snapshot,
       revision: state.revision,
       complete: function(result) {
-        if (completed) return
+        if (completed || disposed) return
         completed = true
         busy = false
         if (!result || result.status === "error") {
@@ -77,6 +139,7 @@ function createNoteState(dispatch) {
         }
         if (result.status !== "ok") {
           state.conflict = true
+          externalRevision = null
           return
         }
         state.revision = result.revision
@@ -88,10 +151,11 @@ function createNoteState(dispatch) {
 
   state.close = function() { state.flush() }
   state.retry = function() {
-    if (state.conflict) return
+    if (!state.error && state.conflict) return
     state.error = false
     state.errorReason = ""
     if (!state.loaded) state.load()
+    else if (state.conflict) state.refresh()
     else state.flush()
   }
   return state

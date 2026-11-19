@@ -8,8 +8,9 @@ Simplenote service and does not sync or use an account.
 The bar button opens a read-only note; its edit button opens a separate editor.
 Edits are saved after a short pause and closing requests an immediate save.
 Errors and conflicts stop saving and retain the unsaved text in memory while the
-plugin is active. Retry is available after an error; conflict resolution is not
-yet implemented. Omarchy 4.5 is the target, not a runtime compatibility claim:
+plugin is active. Retry is available after an error. External changes are
+checked periodically; conflicts offer a choice of local or external text.
+Omarchy 4.5 is the target, not a runtime compatibility claim:
 the plugin has not yet been exercised in the live shell.
 
 Omarchy plugins run without a sandbox, with the user's permissions. Review a
@@ -53,8 +54,9 @@ descriptors and write after the check, or replace the path after the plugin's
 write: these changes cannot be reliably detected or coordinated with
 uncooperative programs. A late write to the displaced inode may not raise a
 warning and may be lost after history rotation. Do not edit the note externally
-while using the plugin if that limitation is unacceptable. A conflict needs
-manual recovery; preserve the visible unsaved text before disabling the plugin
+while using the plugin if that limitation is unacceptable. Inspect protected
+conflict files if a write raced with an external editor. Preserve visible
+unsaved text before disabling the plugin
 or restarting the shell, because memory is not persistent.
 
 Notes are limited to 1 MiB of UTF-8. Larger or invalid UTF-8 files report an
