@@ -16,3 +16,5 @@ and releases will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   separately for manual recovery.
 - Editor open and toggle IPC commands for user-configured shortcuts; the shared
   service owns the editor independently of the bar widget.
+- Copy-on-select in the read-only panel and the editor, with a short settle delay
+  before the selection reaches the clipboard.

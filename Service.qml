@@ -1,12 +1,15 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import qs.Commons
 import "NoteState.js" as NoteState
 import "Shortcut.js" as Shortcut
+import "i18n.js" as T
 
 Item {
   id: root
   property var shell: null
+  readonly property string uiLanguage: T.languageFromBar(shell ? shell.barConfig : null)
   property var machine: null
   property var request: null
   property var shortcutRouter: Shortcut.createRouter(
@@ -26,6 +29,9 @@ Item {
   readonly property int outputLimit: 13 * 1024 * 1024
   property string processOutput: ""
   property bool processFailed: false
+  property string editShortcut: ""
+  property string shortcutOutput: ""
+  property string lastCopiedSelection: ""
 
   function sync() {
     text = machine.text
@@ -82,6 +88,53 @@ Item {
   }
   function openEditor() { shortcutRouter.open() }
   function closeEditor() { editor.closeEditor() }
+  // Copy-on-select writes the regular clipboard; repeating the same selection
+  // must not churn clipboard history when the views re-render.
+  function copySelection(value) {
+    var text = String(value || "")
+    if (text === "") {
+      lastCopiedSelection = ""
+      return
+    }
+    if (text === lastCopiedSelection) return
+    lastCopiedSelection = text
+    Quickshell.clipboardText = text
+  }
+  function refreshShortcut() {
+    if (shortcutProcess.running) return
+    shortcutOutput = ""
+    shortcutProcess.running = true
+    shortcutWatchdog.restart()
+  }
+
+  Timer {
+    id: shortcutWatchdog
+    interval: 3000
+    onTriggered: if (shortcutProcess.running) shortcutProcess.running = false
+  }
+  Process {
+    id: shortcutProcess
+    command: ["hyprctl", "binds", "-j"]
+    stdout: SplitParser {
+      splitMarker: ""
+      onRead: function(chunk) {
+        if (root.shortcutOutput.length + chunk.length > 1048576) {
+          root.shortcutOutput = ""
+          shortcutProcess.running = false
+        } else root.shortcutOutput += chunk
+      }
+    }
+    stderr: SplitParser { splitMarker: ""; onRead: function(chunk) {} }
+    onExited: function(code, status) {
+      shortcutWatchdog.stop()
+      var found = ""
+      if (code === 0) {
+        try { found = Shortcut.noteShortcut(JSON.parse(root.shortcutOutput)) } catch (e) {}
+      }
+      root.editShortcut = found
+      root.shortcutOutput = ""
+    }
+  }
 
   Editor {
     id: editor

@@ -17,7 +17,7 @@ PanelWindow {
   property var targetScreen: null
   readonly property string localeName: I18n.language
 
-  function tr(key) { return T.t(key, localeName) }
+  function tr(key) { return T.t(key, localeName, service ? service.uiLanguage : "system") }
   function focusEditor() {
     Qt.callLater(function() {
       if (!root.opened) return
@@ -110,7 +110,28 @@ PanelWindow {
             spacing: Style.space(8)
             Item {
               width: parent.width
-              height: Style.space(32)
+              height: Style.space(40)
+              Text {
+                id: editorIcon
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰎞"
+                textFormat: Text.PlainText
+                color: Commons.Color.foreground
+                font.family: Style.font.family
+                font.pixelSize: Style.font.title
+              }
+              Text {
+                anchors.left: editorIcon.right
+                anchors.leftMargin: Style.space(10)
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Simple Note"
+                textFormat: Text.PlainText
+                color: Commons.Color.foreground
+                font.family: Style.font.family
+                font.pixelSize: Style.font.title
+                font.bold: true
+              }
               PanelActionButton {
                 anchors.right: parent.right
                 iconText: "󰅖"
@@ -182,5 +203,10 @@ PanelWindow {
         }
       }
     }
+  }
+  SelectionCopy {
+    target: editor
+    onCopyRequested: function(text) { if (root.service) root.service.copySelection(text) }
+    onSelectionCleared: if (root.service) root.service.copySelection("")
   }
 }

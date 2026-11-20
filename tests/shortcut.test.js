@@ -2,7 +2,14 @@ const test = require("node:test")
 const assert = require("node:assert/strict")
 const fs = require("node:fs")
 const path = require("node:path")
-const { createRouter, selectScreen } = require("../Shortcut.js")
+const { createRouter, selectScreen, noteShortcut } = require("../Shortcut.js")
+
+test("note shortcut reports active matching bindings and ignores unrelated keys", () => {
+  assert.equal(noteShortcut([{ description: "Simple Note", key: "N", modmask: 76 }]), "Ctrl+Alt+Super+N")
+  assert.equal(noteShortcut([{ arg: "omarchy-shell danielmrdev.simplenote.editor toggle", key: "Q", modmask: 65 }]), "Super+Shift+Q")
+  assert.equal(noteShortcut([{ description: "Other", key: "N", modmask: 76 }]), "")
+  assert.equal(noteShortcut(null), "")
+})
 
 test("open and toggle address the same service-owned editor without a bar", () => {
   let visible = false

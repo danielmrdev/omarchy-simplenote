@@ -7,6 +7,7 @@ Simplenote service and does not sync or use an account.
 
 The bar button opens a read-only note; its edit button opens a separate editor.
 Edits are saved after a short pause and closing requests an immediate save.
+Selecting text in either view copies it to the clipboard after a short pause.
 Errors and conflicts stop saving and retain the unsaved text in memory while the
 plugin is active. Retry is available after an error. External changes are
 checked periodically; conflicts offer a choice of local or external text.
@@ -47,11 +48,11 @@ With the plugin enabled, open or refocus the editor with:
 omarchy-shell danielmrdev.simplenote.editor open
 ```
 
-For a user-configured Hyprland shortcut, add your preferred binding yourself;
-for example:
+For a user-configured Hyprland shortcut, add your preferred binding to your
+Hyprland configuration; for example, in `~/.config/hypr/bindings.lua`:
 
-```conf
-bind = SUPER, N, exec, omarchy-shell danielmrdev.simplenote.editor toggle
+```lua
+o.bind("SUPER + CTRL + ALT + N", "Simple Note", "omarchy-shell danielmrdev.simplenote.editor toggle")
 ```
 
 No binding is installed or modified automatically. The toggle closes an open
@@ -59,6 +60,9 @@ editor or opens it on the focused monitor. The service owns the editor, so the
 widget is not required in the bar. If the focused monitor is unavailable, it
 falls back to the first available screen. Bar-free operation, focus, monitor
 selection and shortcut behavior have not yet been verified in the live shell.
+The edit button's tooltip discovers bindings with the `Simple Note` description
+or an explicit editor command in Hyprland's binding list; other descriptions
+for Lua bindings cannot reliably be identified.
 
 ## Data and limitations
 

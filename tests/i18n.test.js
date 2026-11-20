@@ -20,6 +20,20 @@ test("Spanish locale variants and English fallback", () => {
   assert.equal(i18n.t("missing", "es"), "missing")
 })
 
+test("language override and bar settings are normalized", () => {
+  assert.equal(i18n.t("empty", "es-ES", "en"), i18n.en.empty)
+  assert.equal(i18n.t("empty", "en-US", "es"), i18n.es.empty)
+  assert.equal(i18n.t("empty", "es-ES", "invalid"), i18n.es.empty)
+  assert.equal(i18n.languageFromBar(null), "system")
+  assert.equal(i18n.languageFromBar({ layout: { right: [
+    { id: "other", uiLanguage: "en" },
+    { id: "danielmrdev.simplenote", uiLanguage: "es" }
+  ] } }), "es")
+  assert.equal(i18n.languageFromBar({ layout: { right: [
+    { id: "danielmrdev.simplenote", uiLanguage: "invalid" }
+  ] } }), "system")
+})
+
 test("size error states the UTF-8 limit and recovery action in both languages", () => {
   assert.match(i18n.t("noteTooLarge", "en"), /1 MiB.*1,048,576 UTF-8 bytes/)
   assert.match(i18n.t("noteTooLarge", "en"), /Reduce.*back up.*retry/)
