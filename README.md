@@ -5,35 +5,38 @@ Simplenote service and does not sync or use an account.
 
 ## Status
 
-The bar button opens a read-only note; its edit button opens a separate editor.
-Edits are saved after a short pause and closing requests an immediate save.
-Selecting text in either view copies it to the clipboard after a short pause.
-Errors and conflicts stop saving and retain the unsaved text in memory while the
+Simple Note keeps one local note. The bar button opens a read-only panel; its
+edit button opens a separate editor. A configurable shell shortcut can open the
+editor directly. Edits are saved after a short pause and closing requests an
+immediate save. Selecting text in either view copies it to the clipboard after
+a short pause.
+
+Errors and conflicts stop saving and retain unsaved text in memory while the
 plugin is active. Retry is available after an error. External changes are
 checked periodically; conflicts offer a choice of local or external text.
-Omarchy 4.5 and later are the target, not a runtime compatibility claim. An
-earlier version was partially exercised in the shell: IPC opened the editor
-without the widget on DP-3, the panel opened, Escape and the close IPC worked.
-The current version has not been runtime or visually verified; these earlier
-observations do not establish that its interactions work.
-In particular, immediate Escape dismissal before Wayland grants keyboard focus
-has not been confirmed in the target shell.
+
+The plugin targets Omarchy 4.5 and later. It has been exercised on Omarchy
+4.5.0: the editor and panel were opened, the configured shortcut was tested,
+and copy-on-select was checked in the editor. Automated tests cover storage,
+conflicts, translations, selection copying, and QML wiring. Other versions and
+less common failure/recovery paths have not all been manually tested.
 
 Omarchy plugins run without a sandbox, with the user's permissions. Review a
 plugin and its dependencies before installing it.
 
 ## Installation and removal
 
-Omarchy 4.5 and later are the intended target; runtime compatibility remains
-unverified. Python 3 and a Linux filesystem supporting `renameat2` exchange are
-required. There is no network service, account, or root requirement. The
-plugin runs Python as your user and can read and write your note directory.
+Omarchy 4.5 and later are the target. Python 3 and a Linux filesystem supporting
+`renameat2` exchange are required. There is no network service, account, or root
+requirement. The plugin runs Python as your user and can read and write your
+note directory.
 
-The repository is currently private. Once a trusted Git URL is available, use
-`omarchy plugin add <git-url>` and follow the prompts; this clones and validates
-the plugin. Enable it with `omarchy plugin enable danielmrdev.simplenote` and
-choose a bar placement if desired. Enabling or changing the bar affects your
-running desktop. No shortcut is installed automatically.
+Install from the public repository with `omarchy plugin add
+https://github.com/danielmrdev/omarchy-simplenote.git` and follow the prompts;
+this clones and validates the plugin. Enable it with
+`omarchy plugin enable danielmrdev.simplenote` and choose a bar placement if
+desired. Enabling or changing the bar affects your running desktop. No shortcut
+is installed automatically.
 
 To uninstall, first preserve any visible unsaved text, then run
 `omarchy plugin remove danielmrdev.simplenote` and follow its confirmation
@@ -58,8 +61,9 @@ o.bind("SUPER + CTRL + ALT + N", "Simple Note", "omarchy-shell danielmrdev.simpl
 No binding is installed or modified automatically. The toggle closes an open
 editor or opens it on the focused monitor. The service owns the editor, so the
 widget is not required in the bar. If the focused monitor is unavailable, it
-falls back to the first available screen. Bar-free operation, focus, monitor
-selection and shortcut behavior have not yet been verified in the live shell.
+falls back to the first available screen. The editor was opened through the
+shell command and configured shortcut in Omarchy 4.5.0; focus and monitor
+fallback behavior have not been verified on every setup.
 The edit button's tooltip discovers bindings with the `Simple Note` description
 or an explicit editor command in Hyprland's binding list; other descriptions
 for Lua bindings cannot reliably be identified.
@@ -129,8 +133,9 @@ describes the plugin contract and validation tools.
 
 ## Releases
 
-Changes are recorded in [CHANGELOG.md](CHANGELOG.md). No release is available
-yet.
+Changes are recorded in [CHANGELOG.md](CHANGELOG.md). See the
+[0.1.0 source](https://github.com/danielmrdev/omarchy-simplenote/tree/v0.1.0)
+for this version.
 
 ## License
 

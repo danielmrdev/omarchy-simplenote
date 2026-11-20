@@ -7,14 +7,19 @@ and releases will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-20
+
 ### Added
 
-- Initial project documentation.
-- Preliminary bar note panel, editor and local plaintext persistence, pending
-  live-shell verification.
-- Automatic rotation of normal note history, with detected conflicts retained
-  separately for manual recovery.
-- Editor open and toggle IPC commands for user-configured shortcuts; the shared
-  service owns the editor independently of the bar widget.
-- Copy-on-select in the read-only panel and the editor, with a short settle delay
-  before the selection reaches the clipboard.
+- Single local plaintext note, read-only bar panel, and floating editor with
+  autosave.
+- English and Spanish interface translations and a localized About page.
+- Editor open/toggle IPC commands for user-configured shortcuts.
+- Copy-on-select in the panel and editor, with a short settle delay.
+- Automatic rotation of normal note history and protected conflict copies.
+- Installation, removal, data handling, recovery, and development documentation.
+
+### Security
+
+- Note contents and history remain plaintext in the user's config directory;
+  no encryption, network access, or account is provided.

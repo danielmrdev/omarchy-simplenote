@@ -1,7 +1,8 @@
 # Contributing
 
-The plugin targets Omarchy 4.5 and later. Static checks do not establish runtime
-compatibility; current-version live-shell and visual checks remain outstanding.
+The plugin targets Omarchy 4.5 and later and has been exercised on Omarchy
+4.5.0. Static checks do not establish compatibility with every supported
+version or environment.
 
 ## Getting started
 
@@ -27,8 +28,8 @@ host properties and PanelWindow generate warnings. Investigate that output;
 none of these checks proves that QML loads in the shell. CI itself must be
 observed running before claiming these checks passed there.
 See the [development guide](https://plugins.omarchy.org/develop.html).
-With permission to change the active shell, exercise panel and editor, bar-free
-shortcut and monitor selection, save errors and conflicts, both languages,
+With permission to change the active shell, exercise panel and editor, shortcut
+and monitor selection, save errors and conflicts, both languages,
 disable/re-enable, restart and removal. Compare screenshots with the approved
 design. The integration fixture connects the real state machine, storage
 helper, router and translations, with source-level checks of QML wiring; it
