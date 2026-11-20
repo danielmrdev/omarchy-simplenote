@@ -1,0 +1,13 @@
+name: Release consistency
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tag, manifest and changelog
+        run: python3 scripts/check_release.py "$GITHUB_REF_NAME"

@@ -30,3 +30,4 @@ dist/
 # Local logs and temporary files
 *.log
 *.tmp
+__pycache__/

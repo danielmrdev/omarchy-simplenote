@@ -1,0 +1,39 @@
+name: Checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    container: archlinux:base
+    steps:
+      - name: Install test and Qt 6 tools
+        run: pacman -Syu --noconfirm --needed git nodejs python jq qt6-declarative quickshell
+      - uses: actions/checkout@v4
+      - name: Get Omarchy 4.5.0 contract
+        run: |
+          git clone --no-checkout https://github.com/omacom/omarchy.git "$RUNNER_TEMP/omarchy"
+          git -C "$RUNNER_TEMP/omarchy" checkout ac2690cd7be4f47e4a255f5e2e78d904d436b068
+      - name: Validate manifest
+        run: bash "$RUNNER_TEMP/omarchy/bin/omarchy-plugin-validate" "$GITHUB_WORKSPACE"
+      - name: Gate plugin-owned Qt 6 diagnostics
+        run: python scripts/qml_gate.py /usr/lib/qt6/bin/qmllint "$RUNNER_TEMP/omarchy/shell"
+      - name: Gate host imports and resolved types
+        run: |
+          mkdir -p "$RUNNER_TEMP/qml-imports"
+          ln -s "$RUNNER_TEMP/omarchy/shell" "$RUNNER_TEMP/qml-imports/qs"
+          find . -name '*.qml' -type f -print0 | xargs -0 /usr/lib/qt6/bin/qmllint \
+            --only-explicit-categories --import error --unresolved-type error \
+            -I "$RUNNER_TEMP/qml-imports"
+      - name: Run behavior and translation tests
+        run: |
+          node --test tests/*.test.js
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/tst_editor.qml
+          QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/tst_selection_copy.qml
+      - name: Report full Qt 6 host-import lint warnings
+        run: |
+          echo "Advisory: dynamic host properties and PanelWindow may produce warnings."
+          find . -name '*.qml' -type f -print0 | xargs -0 /usr/lib/qt6/bin/qmllint -I "$RUNNER_TEMP/qml-imports" || echo "::warning::Full Qt 6 lint did not pass; inspect output and verify on Omarchy"

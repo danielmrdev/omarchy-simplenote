@@ -1,0 +1,20 @@
+const test = require("node:test")
+const assert = require("node:assert/strict")
+const fs = require("node:fs")
+const path = require("node:path")
+
+const read = name => fs.readFileSync(path.join(__dirname, "..", name), "utf8")
+
+test("both note views copy selections through the shared service", () => {
+  const panel = read("NotePanel.qml")
+  const editor = read("Editor.qml")
+  const service = read("Service.qml")
+  assert.match(panel, /id: noteReader/)
+  assert.match(panel, /SelectionCopy\s*\{\s*target: noteReader[\s\S]*?service\.copySelection\(text\)/)
+  assert.match(editor, /SelectionCopy\s*\{\s*target: editor[\s\S]*?service\.copySelection\(text\)/)
+  assert.match(service, /Quickshell\.clipboardText\s*=\s*text/)
+  assert.match(service, /text === lastCopiedSelection/)
+  assert.match(panel, /onSelectionCleared: if \(root\.service\) root\.service\.copySelection\(""\)/)
+  assert.match(editor, /onSelectionCleared: if \(root\.service\) root\.service\.copySelection\(""\)/)
+  assert.doesNotMatch(service, /wl-copy|shellQuote|execDetached/)
+})
