@@ -3,6 +3,8 @@
 An Omarchy shell plugin for one local plain-text note. It is unrelated to the
 Simplenote service and does not sync or use an account.
 
+![Simple Note About panel](preview.png)
+
 ## Status
 
 Simple Note keeps one local note. The bar button opens a read-only panel; its
