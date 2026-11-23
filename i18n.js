@@ -8,7 +8,7 @@ var en = {
   loading: "Loading note…",
   about: "About", aboutInfo: "Help & links", settings: "Settings",
   language: "Language", languageSystem: "System", languageEnglish: "English", languageSpanish: "Español",
-  github: "GitHub", reportIssue: "Report an issue", changelog: "Changelog", marketplace: "Marketplace (coming soon)",
+  github: "GitHub", reportIssue: "Report an issue", changelog: "Changelog", marketplace: "Marketplace",
   subtitle: "YOUR QUICK-LOCAL NOTE",
   aboutDescription: "One local plain-text note, available offline.",
   aboutPrivacy: "Your note is not encrypted. This plugin is not affiliated with the Simplenote service."
@@ -23,7 +23,7 @@ var es = {
   loading: "Cargando nota…",
   about: "Acerca de", aboutInfo: "Ayuda y enlaces", settings: "Ajustes",
   language: "Idioma", languageSystem: "Sistema", languageEnglish: "English", languageSpanish: "Español",
-  github: "GitHub", reportIssue: "Informar de un problema", changelog: "Registro de cambios", marketplace: "Marketplace (próximamente)",
+  github: "GitHub", reportIssue: "Informar de un problema", changelog: "Registro de cambios", marketplace: "Marketplace",
   subtitle: "TU NOTA LOCAL RÁPIDA",
   aboutDescription: "Una nota local de texto sin formato, disponible sin conexión.",
   aboutPrivacy: "Tu nota no está cifrada. Este plugin no está relacionado con el servicio Simplenote."

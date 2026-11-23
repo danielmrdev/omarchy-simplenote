@@ -7,6 +7,13 @@ and releases will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-23
+
+### Changed
+
+- About now opens the published marketplace listing and no longer labels it as
+  coming soon.
+
 ## [0.1.0] - 2026-11-20
 
 ### Added

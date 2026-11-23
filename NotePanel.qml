@@ -18,7 +18,7 @@ Panel {
   readonly property color heroForeground: bar ? bar.foreground : Commons.Color.foreground
   readonly property string heroFontFamily: bar ? bar.fontFamily : Style.font.family
   property bool showingAbout: false
-  readonly property string pluginVersion: "0.1.0"
+  readonly property string pluginVersion: "0.1.1"
   function tr(key) { return T.t(key, localeName, uiLanguage) }
   function toggleAbout() {
     showingAbout = !showingAbout
@@ -239,7 +239,8 @@ Panel {
                     iconText: "\uf07a"
                     bordered: true
                     leftAlign: true
-                    enabled: false
+                    focusable: true
+                    onClicked: Qt.openUrlExternally("https://omarchyplugins.com/plugin.html?id=danielmrdev.simplenote")
                   }
                   Ui.Button {
                     width: parent.width
