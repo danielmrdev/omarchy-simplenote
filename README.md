@@ -136,7 +136,7 @@ describes the plugin contract and validation tools.
 ## Releases
 
 Changes are recorded in [CHANGELOG.md](CHANGELOG.md). See the
-[0.1.0 source](https://github.com/danielmrdev/omarchy-simplenote/tree/v0.1.0)
+[0.1.1 source](https://github.com/danielmrdev/omarchy-simplenote/tree/v0.1.1)
 for this version.
 
 ## License

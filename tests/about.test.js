@@ -24,3 +24,11 @@ test("About version matches the manifest and copy is localized", () => {
     assert.match(panel, new RegExp(`root\\.tr\\("${key}"\\)`))
   }
 })
+
+test("About marketplace button opens the published listing", () => {
+  assert.equal(i18n.en.marketplace, "Marketplace")
+  assert.equal(i18n.es.marketplace, "Marketplace")
+  assert.match(panel, /text: root\.tr\("marketplace"\)/)
+  assert.match(panel, /focusable: true\s+onClicked: Qt\.openUrlExternally\("https:\/\/omarchyplugins\.com\/plugin\.html\?id=danielmrdev\.simplenote"\)/)
+  assert.doesNotMatch(panel, /marketplace[\s\S]{0,200}enabled: false/)
+})
